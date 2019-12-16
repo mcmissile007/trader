@@ -1,0 +1,2 @@
+# trader
+Poloniex Trader
