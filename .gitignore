@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pyre type checker
+logs/
+data/
+poloniex_config.py
+database_config.py
+
