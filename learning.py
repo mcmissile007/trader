@@ -56,4 +56,4 @@ if __name__ == "__main__":
         logger.debug("long sleeping...")
         time.sleep(86400)
 
-    logger.info("START")
+    logger.info("END")
