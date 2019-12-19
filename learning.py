@@ -9,6 +9,7 @@ from learning_funcs import calculate_learning_dataframe_from_db
 
 from database_config import remote_data_base_config
 CURRENCY_PAIRS = [("USDC_BTC",750,300)]
+DAYS_BEFORE = 100
 
 if __name__ == "__main__":
   
@@ -45,7 +46,7 @@ if __name__ == "__main__":
                     continue
                 time.sleep(10) #to have the last candle in database
                 logger.debug("analyzing: %s %s ",currency_pair,str(datetime.now()))
-                df = calculate_learning_dataframe_from_db(logger,remote_data_base_config,time_frame,currency_pair,output_rsi)
+                df = calculate_learning_dataframe_from_db(logger,remote_data_base_config,time_frame,currency_pair,output_rsi,now,DAYS_BEFORE)
                 if not df.empty:
                     now = str(int(time.time()))
                     file_name_pkl = now + "_" + currency_pair + "_" + str(time_frame) + ".pkl"

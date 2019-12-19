@@ -1,4 +1,3 @@
-
 models = []
 #USDC_BTC  
 model = {}
@@ -25,4 +24,4 @@ model['worse'] = -0.05
 model['cheby2k'] = -0.2
 model['steps'] =  566  
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
-models.append(model) 
+models.append(model)

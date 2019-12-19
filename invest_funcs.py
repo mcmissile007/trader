@@ -5,7 +5,7 @@ import math_funcs as _mth
 
 from currency_codes import codes
 
-def simpleShouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,data_base_config):
+def simpleShouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,data_base_config = None):
     IMPORTANT_FEATURES=model['features'] 
     N = model['n'] 
     AVG_TH = model['avg'] 
@@ -54,10 +54,11 @@ def simpleShouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_p
     else:
         data_for_log['buy'] = 1
         logger.debug("roc1:{} less than:{} you must buy!".format(last_candle_df.iloc[0]['roc1'],-MAX_ROC1))
-        _db.logInsertNeighbors(logger,data_base_config,data_for_log)
+        if data_base_config != None:
+            _db.logInsertNeighbors(logger,data_base_config,data_for_log)
         return True
 
-def simpleDownShouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,data_base_config):
+def simpleDownShouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,data_base_config = None):
     IMPORTANT_FEATURES=model['features'] 
     N = model['n'] 
     AVG_TH = model['avg'] 
@@ -107,11 +108,12 @@ def simpleDownShouldIInvest(logger,learning_df,last_candle_df,model,epoch,curren
     else:
         data_for_log['buy'] = 1
         logger.debug("roc1:{} less than:{} you must buy!".format(last_candle_df.iloc[0]['roc1'],-MAX_ROC1))
-        _db.logInsertNeighbors(logger,data_base_config,data_for_log)
+        if data_base_config != None:
+            _db.logInsertNeighbors(logger,data_base_config,data_for_log)
         return True
 
 
-def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,data_base_config):
+def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,data_base_config = None):
     IMPORTANT_FEATURES=model['features'] 
     N = model['n'] 
     AVG_TH = model['avg'] 
@@ -350,7 +352,7 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
         buy = False
         logger.debug("wait to buy...")
         data_for_log['buy']= 0 
-
-    _db.logInsertNeighbors(logger,data_base_config,data_for_log)
+    if data_base_config != None:
+        _db.logInsertNeighbors(logger,data_base_config,data_for_log)
 
     return buy

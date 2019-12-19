@@ -4,6 +4,46 @@ from datetime import datetime
 import pymysql
 from currency_codes import codes
 
+def insert(logger,data_base_config,table_name, m_dict):
+
+    try:
+        db_connection = pymysql.connect(host=data_base_config['host'],
+                                        user=data_base_config['user'],
+                                        password=data_base_config['password'],
+                                        db=data_base_config['db'],
+                                        charset='utf8mb4',
+                                        cursorclass=pymysql.cursors.DictCursor)
+    except Exception as e:
+        logger.error("Error data base connection: %s", str(e))
+        return False
+
+    sql = "insert into " + table_name + " ("
+    for key in m_dict:
+        sql += key + ","
+    sql = sql[:-1]
+    sql += ") values("
+    for key in m_dict:
+        if type(m_dict[key]) == str:
+            sql += "'" + m_dict[key] + "',"
+        else:
+            sql += str(m_dict[key]) + ","
+    sql = sql[:-1]
+    sql += ")"
+    logger.debug(sql)
+    try:
+        with db_connection.cursor() as cursor:
+            cursor.execute(sql)
+        db_connection.commit()
+    except pymysql.OperationalError as error:
+        logger.error("OperationalError data base: %s", str(error))
+        logger.error("sql:%s", sql)
+        return False
+    except Exception as e:
+        logger.error("Error data base: %s", str(e))
+        logger.error("sql:%s", sql)
+        return False
+    return True
+
 def getBalanceFromDB(logger, data_base_config, now):
     try:
         db_connection = pymysql.connect(host=data_base_config['host'],
@@ -133,6 +173,39 @@ def getCandlesFromTickets(logger,data_base_config,currency_pair,time_frame,start
     return buffer_candles[i:] 
 
 
+def existResult(logger,data_base_config,hash_code):
+
+    try:
+        db_connection = pymysql.connect(host=data_base_config['host'],
+                             user=data_base_config['user'],
+                             password=data_base_config['password'],
+                             db=data_base_config['db'],
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+    except Exception as e:
+            logger.error("Error data base connection: %s",str(e))
+            return False
+
+   
+    sql = "select m_hash from results where " 
+    sql += " m_hash='" + hash_code + "'"
+    
+    try:
+      
+        with db_connection.cursor() as cursor:
+            logger.debug("%s",sql)
+            cursor.execute(sql)
+            results = list(cursor.fetchall())
+            if len(results) > 0:
+                return True 
+            else:
+                logger.debug("no results")
+                return False
+       
+    except Exception as e:
+        logger.error(sql)
+        logger.error("Exception in sql:" + str(e))
+        return False
 
 def getLastCandlesFromTickets(logger, data_base_config, currency_pair, time_frame, now, max_num_of_results):
     try:
@@ -222,6 +295,70 @@ def getLastCandlesFromTickets(logger, data_base_config, currency_pair, time_fram
             continue
 
     return buffer_candles
+
+
+
+def logInsertResult(logger,data_base_config,data):
+
+    try:
+        db_connection = pymysql.connect(host=data_base_config['host'],
+                             user=data_base_config['user'],
+                             password=data_base_config['password'],
+                             db=data_base_config['db'],
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+    except Exception as e:
+            logger.error("Error data base connection: %s",str(e))
+            return False
+                             
+    sql = "insert into results(m_hash,m_currency_pair,m_always_win,m_min_rate,m_init_amount,m_max_amount,m_min_amount,m_sos_amount,m_sos_rate,m_mode,m_func,m_avg,m_r,m_min_roc1,m_max_roc1,"
+    sql += "r_time_sim,r_total_benefit,r_max_benefit,r_mean_benefit,r_max_benefit_rate,r_mean_benefit_rate,r_max_inversion,r_mean_inversion,r_median_inversion,r_num_purchases,r_num_repurchases," 
+    sql += "r_repurchase_rate,r_median_repurchases,r_max_repurchases,r_num_games,r_num_sos_games,r_sos_rate,r_base_balance,r_quote_balance) values(" 
+    sql +=  "'" + str(data['m_hash'] ) + "','"
+    sql += str(data['m_currency_pair'] ) + "',"
+    sql += str(data['m_always_win']) + ","
+    sql += str(data['m_min_rate']) + ","
+    sql += str(data['m_init_amount']) + ","
+    sql += str(data['m_max_amount']) + ","
+    sql += str(data['m_min_amount']) + ","
+    sql += str(data['m_sos_amount']) + ","
+    sql += str(data['m_sos_rate']) + ","
+    sql += str(data['m_mode']) + ","
+    sql += str(data['m_func']) + ","
+    sql += str(data['m_avg']) + ","
+    sql += str(data['m_r']) + ","
+    sql += str(data['m_min_roc1']) + ","
+    sql += str(data['m_max_roc1']) + ","
+    sql += str(data['r_time_sim']) + ","
+    sql += str(data['r_total_benefit']) + ","
+    sql += str(data['r_max_benefit']) + ","
+    sql += str(data['r_mean_benefit']) + ","
+    sql += str(data['r_max_benefit_rate']) + ","
+    sql += str(data['r_mean_benefit_rate']) + ","
+    sql += str(data['r_max_inversion']) + ","
+    sql += str(data['r_mean_inversion']) + ","
+    sql += str(data['r_median_inversion']) + ","
+    sql += str(data['r_num_purchases']) + ","
+    sql += str(data['r_num_repurchases']) + ","
+    sql += str(data['r_repurchase_rate']) + ","
+    sql += str(data['r_median_repurchases']) + ","
+    sql += str(data['r_max_repurchases']) + ","
+    sql += str(data['r_num_games']) + ","
+    sql += str(data['r_num_sos_games']) + ","
+    sql += str(data['r_sos_rate']) + ","
+    sql += str(data['r_base_balance']) + ","
+    sql += str(data['r_quote_balance']) + ")"
+    logger.debug("sql:{}".format(sql))
+    try:
+        with db_connection.cursor() as cursor:
+            cursor.execute(sql)
+        db_connection.commit()
+        
+    except Exception as e:
+        logger.error("Error data base: %s",str(e))
+        logger.error("sql:%s",sql) 
+        return False  
+    return True
 
 
 
@@ -366,6 +503,40 @@ def logInsertOrder(logger,data_base_config,currency_pair,_type,price,amount_in_q
         logger.error("sql:%s",sql) 
         return False  
     return True
+
+def getLastTicketFromDBSimulating(logger,data_base_config,currency_pair,time_frame,now):
+
+    delay = 10
+    try:
+        db_connection = pymysql.connect(host=data_base_config['host'],
+                             user=data_base_config['user'],
+                             password=data_base_config['password'],
+                             db=data_base_config['db'],
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+    except Exception as e:
+            logger.error("Error data base connection: %s",str(e))
+            return False
+
+    start_th = now - (288*time_frame)
+    sql = "select last,lowestAsk,highestBid from tickets where " 
+    sql += " currency_pair='" + currency_pair + "'"
+    sql += " and epoch >" + str(start_th)
+    sql += " and epoch <" + str(now+delay)
+    sql += " order by epoch desc limit 1" 
+    try:
+      
+        with db_connection.cursor() as cursor:
+            cursor.execute(sql)
+            results = list(cursor.fetchall())
+            if len(results) == 1:
+                return results[0] 
+            else:
+                return False
+    except Exception as e:
+        logger.error(sql)
+        logger.error("Exception in sql:" + str(e))
+        return False
 
 def getLastTicketFromDB(logger,data_base_config,currency_pair,time_frame):
 

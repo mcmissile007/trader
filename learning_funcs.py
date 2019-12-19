@@ -72,14 +72,14 @@ def simulate(df,rsi_th):
     return (pd.Series(benefits),pd.Series(steps),pd.Series(indexes_out),) 
 
 
-def calculate_learning_dataframe_from_db(logger,remote_data_base_config,time_frame,currency_pair,output_rsi):
+def calculate_learning_dataframe_from_db(logger,remote_data_base_config,time_frame,currency_pair,output_rsi,now_epoch,days_before):
     retries = 3
     data_ok = False
     while (retries > 0):
         time.sleep(5)
         retries -= 1
-        end_date = datetime.now() - timedelta(days=1) 
-        start_date = end_date - timedelta(days=100)
+        end_date = datetime.utcfromtimestamp(now_epoch) - timedelta(days=1) 
+        start_date = end_date - timedelta(days=days_before)
         from_date = {'year':start_date.year,'month':start_date.month,'day':start_date.day} 
         to_date = {'year':end_date.year,'month':end_date.month,'day':end_date.day} 
         request_data ={'currency_pair' : currency_pair, 'time_frame': time_frame, 'from_date': from_date, 'to_date': to_date}
