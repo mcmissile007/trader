@@ -30,21 +30,6 @@ import models_funcs as _md_funcs
 import math_funcs as _mth
 import simulator_funcs as _sim
 
-'''
-En desarrollo.
-0. Se decide que moneda se va a simular y en que periodo. Se decide el DAYS_BEFORE pej 100 y el time_frame
-currency_pair, start_simulation, end_simulation, DAYS_BEFORE
-1.Debo de tener toda la tabla de ticktes para una moneda en un dataframe.
-sera un filtro pro currenci pair desde start - 101 dias hasta end_simulation.
-2.Con esa tabla creo otro dataframe de candles en un timeframe
-3.Se debe de crear los data files una sola vez un proceso independiente que puede usar varios cpus para repartirse el trabajo.
-4._db.getLastCandlesFromTickets se obtiene del dataframe de candles los ultimos 300 candles en funcion del now actual
-5.= _db.getLastTicketFromDBSimulating se obtine del dataframe de tickets
-
-
-'''
-
-
 
 def main(cpu, models_testing):
 
