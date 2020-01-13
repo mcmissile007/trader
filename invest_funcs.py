@@ -129,6 +129,7 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
     OUTPUT_RSI_VALUE = int(BEN_FIELD.split("_")[1])/1000.0
     INPUT_RSI_VALUE_TH = OUTPUT_RSI_VALUE- (OUTPUT_RSI_VALUE*0.05)
     data_for_log = {} 
+      
 
     logger.debug("N:{} AVG_TH:{} CHEBY_2K_TH:{} WORSE_TH:{} BEN_FIELD:{} MODE:{}".format(N,AVG_TH,CHEBY_2K_TH,WORSE_TH,BEN_FIELD,MODE))
     logger.debug("STEP_FIELD:{} RSI_MODE:{} MIN_ROC1:{} MAX_ROC1:{} STEPS_TH:{} ".format(STEP_FIELD,RSI_MODE,MIN_ROC1,MAX_ROC1,STEPS_TH))
@@ -165,7 +166,8 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
         if last_candle_df.iloc[0]['rsi'] > INPUT_RSI_VALUE_TH:
             logger.debug("rsi_mode 1")
             logger.debug("rsi:{} bigger than:{}".format(last_candle_df.iloc[0]['rsi'],INPUT_RSI_VALUE_TH))
-            _db.logInsertNeighbors(logger,data_base_config,data_for_log)
+            if data_base_config != None:
+                _db.logInsertNeighbors(logger,data_base_config,data_for_log)
             return False
 
         
@@ -187,7 +189,8 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
         if abs(last_candle_df.iloc[0]['roc1'])  > MAX_ROC1:
             data_for_log['buy'] = 1
             logger.debug("abs roc1:{} greater than:{} you must buy!".format(last_candle_df.iloc[0]['roc1'],MAX_ROC1))
-            _db.logInsertNeighbors(logger,data_base_config,data_for_log)
+            if data_base_config != None:
+                _db.logInsertNeighbors(logger,data_base_config,data_for_log)
             return True
     if MODE == 4:
         if last_candle_df.iloc[0]['roc1']  > MAX_ROC1:
@@ -345,7 +348,6 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
     
     if cheby2k_condition  and average_condition and quantile_cond and worse_condition and steps_condition:
         buy = True
-        logger.debug("you must buy!")
         data_for_log['buy'] = 1 
         
     else:

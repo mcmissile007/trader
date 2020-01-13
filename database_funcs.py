@@ -5,6 +5,7 @@ import pymysql
 from currency_codes import codes
 
 def insert(logger,data_base_config,table_name, m_dict):
+    #tested with results
 
     try:
         db_connection = pymysql.connect(host=data_base_config['host'],
@@ -237,6 +238,7 @@ def getLastCandlesFromTickets(logger, data_base_config, currency_pair, time_fram
             logger.debug("sql:{}".format(sql))
             cursor.execute(sql)
             results = list(cursor.fetchall())
+            #print(results)
             if len(results) < 1:
                 logger.debug("No results!")
                 return False
@@ -255,17 +257,28 @@ def getLastCandlesFromTickets(logger, data_base_config, currency_pair, time_fram
         for i, item in enumerate(results):
             item_epoch = item['epoch']
             item_last = item['last']
-            if candle_values == [] and item_epoch > b_start:
-                if (i-1) > 0:
-                    candle_values.append(results[i-1]['last'])
-                else:
-                    candle_values.append(item_last)
+
+            
+            
+            if candle_values == [] and item_epoch < b_start:
                 continue
+           
+            if candle_values == [] and item_epoch == b_start:
+                candle_values.append(item_last)
+                continue
+            if candle_values == [] and item_epoch > b_start: 
+                if (i-1) > 0:
+                    candle_values.append(results[i-1]['last']) #insert the last close as first, no jumps
+                candle_values.append(item_last)
+                continue
+        
             if candle_values != [] and item_epoch <= b_end:
                 candle_values.append(item_last)
                 continue
+
             if item_epoch > b_end:
                 break
+            
 
         if len(candle_values) > 0:
             open_value = candle_values[0]
@@ -533,6 +546,45 @@ def getLastTicketFromDBSimulating(logger,data_base_config,currency_pair,time_fra
                 return results[0] 
             else:
                 return False
+    except Exception as e:
+        logger.error(sql)
+        logger.error("Exception in sql:" + str(e))
+        return False
+
+def getTicketsFromDB(logger,data_base_config,currency_pair,start_th,end_th):
+
+
+    try:
+        db_connection = pymysql.connect(host=data_base_config['host'],
+                             user=data_base_config['user'],
+                             password=data_base_config['password'],
+                             db=data_base_config['db'],
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+    except Exception as e:
+            logger.error("Error data base connection: %s",str(e))
+            return False
+
+   
+    sql = "select epoch,currency_pair,last,lowestAsk,highestBid,ts from tickets where " 
+    sql += " currency_pair='" + currency_pair + "'"
+    sql += " and epoch >=" + str(start_th)
+    sql += " and epoch <=" + str(end_th)
+    sql += " order by epoch" 
+    
+    try:
+      
+        with db_connection.cursor() as cursor:
+            logger.debug("%s",sql)
+            cursor.execute(sql)
+            results = list(cursor.fetchall())
+            logger.debug("%s",results)
+            if len(results) > 0:
+                return results 
+            else:
+                logger.debug("no results")
+                return False
+       
     except Exception as e:
         logger.error(sql)
         logger.error("Exception in sql:" + str(e))

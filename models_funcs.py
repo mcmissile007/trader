@@ -3,15 +3,15 @@ import random
 import hashlib
 
 def getModeltoTest():
-    mode_sample = [3,5]
-    always_win_sample = [True,False]
-    r_sample =  [0.005,0.01]
+    mode_sample = [3]
+    always_win_sample = [True]
+    r_sample =  [0.005]
     f_sample =  [0]
     avg_sample =  [0.02] 
-    sos_model_benefit_sample =  [0.008,0.012] 
-    amount_to_sos_mode_sample =  [100,1000] 
-    max_amount_to_buy_in_base_sample =  [2000] 
-    initial_amount_to_buy_in_base_sample = [5.0,50,200.0]  
+    sos_model_benefit_sample =  [0.008] 
+    amount_to_sos_mode_sample =  [100] 
+    max_amount_to_buy_in_base_sample =  [6000] 
+    initial_amount_to_buy_in_base_sample = [5.0]  
     min_current_rate_benefit_sample =  [0.02] 
 
     model_to_test = {}

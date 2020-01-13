@@ -30,8 +30,23 @@ import models_funcs as _md_funcs
 import math_funcs as _mth
 import simulator_funcs as _sim
 
+'''
+En desarrollo.
+0. Se decide que moneda se va a simular y en que periodo. Se decide el DAYS_BEFORE pej 100 y el time_frame
+currency_pair, start_simulation, end_simulation, DAYS_BEFORE
+1.Debo de tener toda la tabla de ticktes para una moneda en un dataframe.
+sera un filtro pro currenci pair desde start - 101 dias hasta end_simulation.
+2.Con esa tabla creo otro dataframe de candles en un timeframe
+3.Se debe de crear los data files una sola vez un proceso independiente que puede usar varios cpus para repartirse el trabajo.
+4._db.getLastCandlesFromTickets se obtiene del dataframe de candles los ultimos 300 candles en funcion del now actual
+5.= _db.getLastTicketFromDBSimulating se obtine del dataframe de tickets
 
-def main(cpu,models_testing):
+
+'''
+
+
+
+def main(cpu, models_testing):
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("simulating_" + str(cpu) )
@@ -44,6 +59,8 @@ def main(cpu,models_testing):
     logger.addHandler(handler)
     
     time_frame = 300
+    day_before_learning = 100
+
     while (True):
         model = _md_funcs.getModeltoTest()
         if  model['hash'] in models_testing:
@@ -52,6 +69,7 @@ def main(cpu,models_testing):
             continue
         break
     models_testing.append(model['hash'])
+  
 
     currency_pair = model['currency_pair']
     always_win = model['always_win'] 
@@ -80,8 +98,27 @@ def main(cpu,models_testing):
     base_balance.append(6000)
     quote_balance.append(0)
     time_start_sim = int(time.time())
+    file_name_pkl = "tickets_"  + currency_pair + "_" + str(start_time_simulation) + "_" + str(end_time_simulation)  + "_"  + str(day_before_learning)  + ".pkl"
+    if os.path.exists("data/" + file_name_pkl):
+        tickets_df = pd.read_pickle("data/" + file_name_pkl)
+    else:
+        logger.error(f"Error reading tickets dataframe:no file data")
+        return
+    if tickets_df.empty:
+        logger.error(f"Error reading tickets dataframe,empty dataframe")
+        return
 
-
+    file_name_pkl = "candles_"  + currency_pair + "_" + str(start_time_simulation) + "_" + str(end_time_simulation)  + "_"  + str(day_before_learning)  + "_"  + str(time_frame)  +".pkl"
+    if os.path.exists("data/" + file_name_pkl):
+        full_candles_df = pd.read_pickle("data/" + file_name_pkl)
+    else:
+        logger.error(f"Error reading candles dataframe:no file data")
+        return
+    if full_candles_df.empty:
+        logger.error(f"Error reading candles dataframe,empty dataframe")
+        return
+    
+    
     while (True):
         step += 1
         now += time_frame
@@ -131,12 +168,11 @@ def main(cpu,models_testing):
             histogram_std = learning_df.histogram.std()
 
         max_num_of_results = 300
-       
-        last_candles = _db.getLastCandlesFromTickets(logger,local_data_base_config,currency_pair,time_frame,now,max_num_of_results)
-        if last_candles  == False:
-            logger.error("error getting candles from db.")
-            return
-        candles_df = pd.DataFrame(last_candles)
+      
+        candles_df = full_candles_df[(full_candles_df.date < (now)) & (full_candles_df.date >= (now-(max_num_of_results*time_frame)) )].copy(deep = True)
+        
+        
+
         candles_df['tm'] = candles_df['date'].apply(datetime.fromtimestamp) 
         candles_df['roc0'] =  (candles_df['close']/candles_df['open']) - 1.0
         candles_df['roc1'] = candles_df.close.pct_change(periods=1)
@@ -182,18 +218,22 @@ def main(cpu,models_testing):
         candles_df['histogram_z'] = (candles_df.histogram - histogram_mean)/histogram_std
 
         last_candle_df = candles_df[-1:].copy(deep = True)  
-       
-        ticket = _db.getLastTicketFromDBSimulating(logger,local_data_base_config,currency_pair,time_frame,now)
-        if ticket == False:
+        delay = 10
+        ticket = tickets_df[tickets_df.epoch < (now+delay)].tail(1)
+        if ticket.empty:
             logger.info("Error getting last ticket to calculate amount_invested:{}".format(ticket))
             return
-        last = float(ticket['last'])
-        highestBid = float(ticket['highestBid'])
-        lowestAsk = float(ticket['lowestAsk'])
+     
+        last = float(ticket.iloc[0]['last'])
+        highestBid = float(ticket.iloc[0]['highestBid'])
+        lowestAsk = float(ticket.iloc[0]['lowestAsk'])
+       
         amount_invested_in_base  = sum(quote_balance) * last
         logger.debug("amount_invested in base for current rate:{}".format(amount_invested_in_base))
         logger.debug("amount to sell in quote currency:{}".format(sum(quote_balance)))
         enought_quote_balance = False
+       
+
 
         if amount_invested_in_base > 1.0:
             enought_quote_balance = True
@@ -371,7 +411,9 @@ if __name__ == "__main__":
    
   
     number_of_cpus = multiprocessing.cpu_count()
-      
+    number_of_cpus = 1
+   
+   
     for cpu in range(number_of_cpus):
         process = multiprocessing.Process(target = main, args=(cpu,models_testing))
         process.start()
