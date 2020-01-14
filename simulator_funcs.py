@@ -67,14 +67,14 @@ def sim_buy_in_base (logger,local_data_base_config,currency_pair,close,increment
 
     if purchase_loss < 0.015:
         response = sim_buy_now(logger,local_data_base_config,currency_pair,time_frame,purchase_price,amount_to_buy_in_quote,purchase_operations,base_balance,quote_balance,now,lowestAsk) 
-        print("sim_buy_now success:{} ".format(response))
+       # print("sim_buy_now success:{} ".format(response))
         logger.debug("base_balance:{}".format(base_balance)) 
         logger.debug("quote_balance:{}".format(quote_balance))
         logger.debug("sum base_balance:{}".format(sum(base_balance))) 
         logger.debug("sum quote_balance:{}".format(sum(quote_balance)))
     else:
         pass
-        print("no buyed exceed purchase_loss:{} ".format(purchase_price))
+       # print("no buyed exceed purchase_loss:{} ".format(purchase_price))
 
 def sim_sell_SOS (logger,local_data_base_config,currency_pair,close,increment,time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,sos_model_benefit,sos_games,last,highestBid):
 
@@ -103,7 +103,7 @@ def sim_sell_SOS (logger,local_data_base_config,currency_pair,close,increment,ti
     logger.debug("abs rate_loss:{}".format(abs_rate_loss))
     if current_rate_benefit > sos_model_benefit:
         sell_price_limit = sell_price  - (sell_price*0.005)
-        print("sell_price:{}".format(sell_price))
+       # print("sell_price:{}".format(sell_price))
         logger.debug("sell_price_limit:{}".format(sell_price_limit))
         purchase_operations.clear()
         trade_operations.append((total_amount_invested_in_base,total_current_base_benefit,current_rate_benefit))
@@ -145,7 +145,7 @@ def sim_sell (logger,local_data_base_config,currency_pair,close,increment,time_f
             return
     rate_secure =  current_rate_benefit * 0.1   
     sell_price_limit = sell_price  - (sell_price*rate_secure)
-    print("sell_price:{}".format(sell_price))
+   # print("sell_price:{}".format(sell_price))
     logger.debug("sell_price_limit:{}".format(sell_price_limit))
     logger.debug("sell_price_limit:{}".format(sell_price_limit))
     purchase_operations.clear()
