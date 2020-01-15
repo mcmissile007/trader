@@ -31,21 +31,12 @@ import math_funcs as _mth
 import simulator_funcs as _sim
 
 
-def main(cpu, models_testing):
+def main(logger, models_testing):
 
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("simulating_" + str(cpu) )
-    log_file_name = "simulating_" + str(cpu)
-    filename =  "./logs/" + log_file_name + "." + str(int(time.time()))  + ".log"
-    handler = TimedRotatingFileHandler(filename, when="midnight", interval=1)
-    handler.suffix = "%Y%m%d"
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s : %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+  
     
     time_frame = 300
     day_before_learning = 100
-
     while (True):
         model = _md_funcs.getModeltoTest()
         if  model['hash'] in models_testing:
@@ -391,22 +382,32 @@ if __name__ == "__main__":
 
 
     processes = []
+    loggers = [] 
     models_testing = multiprocessing.Manager().list()
 
    
   
     number_of_cpus = multiprocessing.cpu_count()
     #number_of_cpus = 2
-   
-   
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("fast_simulating")
+    log_file_name = "fast_simulating"
+    filename =  "./logs/" + log_file_name + "_" + str(int(time.time()))  + ".log"
+    handler = TimedRotatingFileHandler(filename, when="midnight", interval=1)
+    handler.suffix = "%Y%m%d"
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s : %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    loggers.append(logger)
+
     for cpu in range(number_of_cpus):
-        process = multiprocessing.Process(target = main, args=(cpu,models_testing))
+        process = multiprocessing.Process(target = main, args=(logger,models_testing))
         process.start()
         processes.append(process)
         
         
     while (True):  
-       
+        
         processes_to_remove =  []
         time.sleep(10)
         for process_item in processes:
@@ -415,6 +416,6 @@ if __name__ == "__main__":
                
         for process_to_remove in processes_to_remove:
             processes.remove(process_to_remove)
-            process = multiprocessing.Process(target = main, args=(cpu,models_testing))
+            process = multiprocessing.Process(target = main, args=(logger,models_testing))
             process.start()
             processes.append(process)
