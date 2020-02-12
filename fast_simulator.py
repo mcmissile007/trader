@@ -45,6 +45,7 @@ def main(logger, models_testing):
             continue
         break
     models_testing.append(model['hash'])
+    logger.info(f'model_testing:{model["hash"]}')
   
 
     currency_pair = model['currency_pair']
@@ -333,6 +334,7 @@ def main(logger, models_testing):
     data_for_log['m_currency_pair'] = model['currency_pair']
     data_for_log['m_always_win'] = int(model['always_win'] == True)
     data_for_log['m_min_rate'] = model['min_current_rate_benefit']
+    data_for_log['m_init_base_balance'] = model['initial_base_balance_to_simulate']
     data_for_log['m_init_amount'] = model['initial_amount_to_buy_in_base']
     data_for_log['m_max_amount'] = model['max_amount_to_buy_in_base']
     data_for_log['m_min_amount'] = model['min_amount_to_buy_in_base']

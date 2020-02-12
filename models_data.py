@@ -16,6 +16,7 @@ model['min_current_rate_benefit'] = 0.02
 model['currency_pair'] = "USDC_BTC" 
 model['sleep_time'] = 10  + len(models)
 model['log_file_name'] = "trader_USDC_BTC_"
+model['initial_base_balance_to_simulate'] = 6000.0
 model['initial_amount_to_buy_in_base'] = 50.0 
 model['min_amount_to_buy_in_base'] = 1.1
 model['max_amount_to_buy_in_base'] = 1000000.0

@@ -3,15 +3,16 @@ import random
 import hashlib
 
 def getModeltoTest():
-    mode_sample = [3,5]
-    always_win_sample = [True,False]
-    r_sample =  [0.005,0.01,0.02]
-    f_sample =  [0,1,2]
-    avg_sample =  [0.015,0.02,0.025] 
-    sos_model_benefit_sample =  [0.005,0.01] 
+    initial_base_balance_to_simulate = 10000.0
+    mode_sample = [3]
+    always_win_sample = [False]
+    r_sample =  [0.005,0.01]
+    f_sample =  [0]
+    avg_sample =  [0.015,0.02] 
+    sos_model_benefit_sample =  [0.01] 
     amount_to_sos_mode_sample =  [100,1000,2000] 
-    max_amount_to_buy_in_base_sample =  [2000,6000,1000000] 
-    initial_amount_to_buy_in_base_sample = [5.0,50,200]  
+    max_amount_to_buy_in_base_sample =  [6000,1000000] 
+    initial_amount_to_buy_in_base_sample = [50,200]  
     min_current_rate_benefit_sample =  [0.015,0.02,0.025]  
 
     model_to_test = {}
@@ -22,6 +23,7 @@ def getModeltoTest():
     model_to_test['min_amount_to_buy_in_base'] = 1.1
     model_to_test['n'] = -2
     model_to_test['ben_field'] = "b_750"
+    model_to_test['initial_base_balance_to_simulate'] = initial_base_balance_to_simulate
     model_to_test['min_roc1'] = 0.003
     model_to_test['max_roc1'] = 0.025
     model_to_test['rsi_mode'] = 1
@@ -44,6 +46,7 @@ def getModeltoTest():
     cadena = model_to_test['currency_pair'] + separator
     cadena += str(model_to_test['always_win']) + separator
     cadena += str(round(model_to_test['min_current_rate_benefit'],4)) + separator
+    cadena += str(round(model_to_test['initial_base_balance_to_simulate'],0)) + separator
     cadena += str(round(model_to_test['initial_amount_to_buy_in_base'],0)) + separator
     cadena += str(round(model_to_test['max_amount_to_buy_in_base'],0)) + separator
     cadena += str(round(model_to_test['min_amount_to_buy_in_base'],0)) + separator
