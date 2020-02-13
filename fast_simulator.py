@@ -72,7 +72,7 @@ def main(logger, models_testing):
     repurchases = []
     games =  []
     sos_games = []
-    base_balance.append(6000)
+    base_balance.append(model['initial_base_balance_to_simulate'])
     quote_balance.append(0)
     time_start_sim = int(time.time())
     file_name_pkl = "tickets_"  + currency_pair + "_" + str(start_time_simulation) + "_" + str(end_time_simulation)  + "_"  + str(day_before_learning)  + ".pkl"

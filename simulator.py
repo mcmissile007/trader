@@ -77,7 +77,7 @@ def main(cpu,models_testing):
     repurchases = []
     games =  []
     sos_games = []
-    base_balance.append(6000)
+    base_balance.append(model['initial_base_balance_to_simulate'])
     quote_balance.append(0)
     time_start_sim = int(time.time())
 
