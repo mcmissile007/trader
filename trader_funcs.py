@@ -111,7 +111,7 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
 
 
 
-def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,output_rsi,amount_to_sell,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,sos_rate):
+def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,candle_rsi,output_rsi,amount_to_sell,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,sos_rate):
  
     ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
     logger.debug("try to sell last ticket:{}".format(ticket))
@@ -141,16 +141,29 @@ def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,clos
         logger.debug("total_current_base_benefit:{}".format(total_current_base_benefit))
         abs_rate_loss = abs(current_rate_benefit/(sell_loss+0.0001))
         logger.debug("abs rate_loss:{}".format(abs_rate_loss))
-        if current_rate_benefit > float(sos_rate):
-            sell_price_limit = sell_price  - (sell_price*0.005)
-            logger.debug("sell_price:{}".format(sell_price))
-            logger.debug("sell_price_limit:{}".format(sell_price_limit))
-            response = _poloniex.sell_now_secure(semaphore,logger,remote_data_base_config,currency_pair,time_frame,sell_price,amount_to_sell,sell_price_limit)
-            if response != False:
-                if 'orderNumber' in response and int(response['orderNumber']) > 0 :
-                    _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],output_rsi,int(response['orderNumber']),json.dumps(response))
+        if always_win:
+            if current_rate_benefit > float(sos_rate):
+                sell_price_limit = sell_price  - (sell_price*0.005)
+                logger.debug("sell_price:{}".format(sell_price))
+                logger.debug("sell_price_limit:{}".format(sell_price_limit))
+                response = _poloniex.sell_now_secure(semaphore,logger,remote_data_base_config,currency_pair,time_frame,sell_price,amount_to_sell,sell_price_limit)
+                if response != False:
+                    if 'orderNumber' in response and int(response['orderNumber']) > 0 :
+                        _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],output_rsi,int(response['orderNumber']),json.dumps(response))
+            else:
+                logger.debug("current rate benefit not enough to SOS sell:{}".format(current_rate_benefit))
         else:
-            logger.debug("current rate benefit not enough to SOS sell:{}".format(current_rate_benefit))
+            if candle_rsi > (output_rsi / 1000.0):
+                sell_price_limit = sell_price  - (sell_price*0.005)
+                logger.debug("sell_price:{}".format(sell_price))
+                logger.debug("sell_price_limit:{}".format(sell_price_limit))
+                response = _poloniex.sell_now_secure(semaphore,logger,remote_data_base_config,currency_pair,time_frame,sell_price,amount_to_sell,sell_price_limit)
+                if response != False:
+                    if 'orderNumber' in response and int(response['orderNumber']) > 0 :
+                        _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],output_rsi,int(response['orderNumber']),json.dumps(response))
+            else:
+                logger.debug("always win is false but candle_rsi is low to SOS sell :{}".format(candle_rsi))
+
 
 def try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,output_rsi,amount_to_sell,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance):
   
@@ -182,11 +195,16 @@ def try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,close,in
         logger.debug("total_current_base_benefit:{}".format(total_current_base_benefit))
         abs_rate_loss = abs(current_rate_benefit/(sell_loss+0.0001))
         logger.debug("abs rate_loss:{}".format(abs_rate_loss))
+        '''
         if always_win:
             if (current_rate_benefit < min_current_rate_benefit):
                 logger.debug("aborted sell i want to win always:{}  and current benefit:{}".format(min_current_rate_benefit,current_rate_benefit))
                 return
-        
+        '''
+        if True: #in not sos mode always win is always true  
+            if (current_rate_benefit < min_current_rate_benefit):
+                logger.debug("aborted sell i want to win always:{}  and current benefit:{}".format(min_current_rate_benefit,current_rate_benefit))
+                return
         #to avoid splitting the sell always sell_now_secure  with highestBid
         #splitting the sell can cause some errors getting current mean price
         '''

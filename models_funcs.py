@@ -4,16 +4,16 @@ import hashlib
 
 def getModeltoTest():
     initial_base_balance_to_simulate = 10000.0
-    mode_sample = [3]
-    always_win_sample = [False]
+    mode_sample = [3,5]
+    always_win_sample = [False,True]
     r_sample =  [0.005,0.01]
     f_sample =  [0]
     avg_sample =  [0.015,0.02] 
     sos_model_benefit_sample =  [0.01] 
-    amount_to_sos_mode_sample =  [100,1000,2000] 
-    max_amount_to_buy_in_base_sample =  [6000,1000000] 
+    amount_to_sos_mode_sample =  [200,2000]  
+    max_amount_to_buy_in_base_sample =  [1000000] 
     initial_amount_to_buy_in_base_sample = [50,200]  
-    min_current_rate_benefit_sample =  [0.015,0.02,0.025]  
+    min_current_rate_benefit_sample =  [0.02]  
 
     model_to_test = {}
     #fixed

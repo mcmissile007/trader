@@ -218,7 +218,7 @@ def main(logger, models_testing):
         if sum(base_balance) < float(model['amount_to_sos_mode'])  and enought_quote_balance:
              logger.debug("base_balance less than max_amount_to_buy_in_base:{} SOS!!".format(sum(base_balance)))
              sos_model_benefit = float(model['sos_model_benefit'])
-             _sim.sim_sell_SOS(logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,sos_model_benefit,sos_games,last,highestBid) 
+             _sim.sim_sell_SOS(logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,sos_model_benefit,sos_games,last,highestBid) 
              continue
 
         #rsi mode always 1 so never buy if rsi is high 
@@ -390,7 +390,7 @@ if __name__ == "__main__":
    
   
     number_of_cpus = multiprocessing.cpu_count()
-    #number_of_cpus = 2
+   # number_of_cpus = 1
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("fast_simulating")
     log_file_name = "fast_simulating"

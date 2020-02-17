@@ -76,7 +76,7 @@ def sim_buy_in_base (logger,local_data_base_config,currency_pair,close,increment
         pass
        # print("no buyed exceed purchase_loss:{} ".format(purchase_price))
 
-def sim_sell_SOS (logger,local_data_base_config,currency_pair,close,increment,time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,sos_model_benefit,sos_games,last,highestBid):
+def sim_sell_SOS (logger,local_data_base_config,currency_pair,close,increment,time_frame,candle_rsi,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,sos_model_benefit,sos_games,last,highestBid):
 
    
     sell_loss = (last/highestBid) -1.0
@@ -101,19 +101,33 @@ def sim_sell_SOS (logger,local_data_base_config,currency_pair,close,increment,ti
     logger.debug("total_current_base_benefit:{}".format(total_current_base_benefit))
     abs_rate_loss = abs(current_rate_benefit/(sell_loss+0.0001))
     logger.debug("abs rate_loss:{}".format(abs_rate_loss))
-    if current_rate_benefit > sos_model_benefit:
-        sell_price_limit = sell_price  - (sell_price*0.005)
-       # print("sell_price:{}".format(sell_price))
-        logger.debug("sell_price_limit:{}".format(sell_price_limit))
-        purchase_operations.clear()
-        trade_operations.append((total_amount_invested_in_base,total_current_base_benefit,current_rate_benefit))
-        base_balance.append(total_amount_invested_in_base + total_current_base_benefit)
-        quote_balance.append(-sum(quote_balance))
-        sos_games.append(1)
+    if always_win:
+        if current_rate_benefit > sos_model_benefit:
+            sell_price_limit = sell_price  - (sell_price*0.005)
+            logger.debug("sell_price_limit:{}".format(sell_price_limit))
+            purchase_operations.clear()
+            trade_operations.append((total_amount_invested_in_base,total_current_base_benefit,current_rate_benefit))
+            base_balance.append(total_amount_invested_in_base + total_current_base_benefit)
+            quote_balance.append(-sum(quote_balance))
+            sos_games.append(1)
 
+        else:
+            pass
+            logger.debug("current rate benefit not enough to SOS sell:{}".format(current_rate_benefit))
     else:
-        pass
-        logger.debug("current rate benefit not enough to SOS sell:{}".format(current_rate_benefit))
+        if candle_rsi > (output_rsi / 1000.0):
+            sell_price_limit = sell_price  - (sell_price*0.005)
+            logger.debug("sell_price_limit:{}".format(sell_price_limit))
+            purchase_operations.clear()
+            trade_operations.append((total_amount_invested_in_base,total_current_base_benefit,current_rate_benefit))
+            base_balance.append(total_amount_invested_in_base + total_current_base_benefit)
+            quote_balance.append(-sum(quote_balance))
+            sos_games.append(1)
+        else:
+            pass
+            logger.debug("always win is false but candle_rsi is low to SOS sell :{}".format(candle_rsi))
+
+
 
 def sim_sell (logger,local_data_base_config,currency_pair,close,increment,time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,games,last,highestBid):
 
@@ -139,7 +153,14 @@ def sim_sell (logger,local_data_base_config,currency_pair,close,increment,time_f
     logger.debug("total_current_base_benefit:{}".format(total_current_base_benefit))
     abs_rate_loss = abs(current_rate_benefit/(sell_loss+0.0001))
     logger.debug("abs rate_loss:{}".format(abs_rate_loss))
+    '''
     if always_win:
+        if (current_rate_benefit < min_current_rate_benefit):
+            logger.debug("aborted sell i want to win always:{}  and current benefit:{}".format(min_current_rate_benefit,current_rate_benefit))
+            return
+
+    '''
+    if True: # in normal mode always_win is TRUE 
         if (current_rate_benefit < min_current_rate_benefit):
             logger.debug("aborted sell i want to win always:{}  and current benefit:{}".format(min_current_rate_benefit,current_rate_benefit))
             return

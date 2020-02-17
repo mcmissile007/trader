@@ -229,7 +229,7 @@ def main(semaphore,model):
         if base_balance < model['sos_amount'] and enought_quote_balance:
              logger.debug("base_balance less than sos_amount:{} SOS!!".format(model['sos_amount']))
              possible_open_order = True
-             _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate']) 
+             _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate']) 
              continue
 
         #rsi mode always 1 so never buy if rsi is high   
