@@ -22,9 +22,9 @@ def simpleShouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_p
     INPUT_RSI_VALUE_TH = OUTPUT_RSI_VALUE- (OUTPUT_RSI_VALUE*0.05)
     data_for_log = {} 
 
-    logger.debug("N:{} AVG_TH:{} CHEBY_2K_TH:{} WORSE_TH:{} BEN_FIELD:{} MODE:{}".format(N,AVG_TH,CHEBY_2K_TH,WORSE_TH,BEN_FIELD,MODE))
-    logger.debug("STEP_FIELD:{} RSI_MODE:{} MIN_ROC1:{} MAX_ROC1:{} STEPS_TH:{} ".format(STEP_FIELD,RSI_MODE,MIN_ROC1,MAX_ROC1,STEPS_TH))
-    logger.debug("OUTPUT_RSI_VALUE:{} INPUT_RSI_VALUE_TH:{}".format(OUTPUT_RSI_VALUE,INPUT_RSI_VALUE_TH))
+    #logger.debug("N:{} AVG_TH:{} CHEBY_2K_TH:{} WORSE_TH:{} BEN_FIELD:{} MODE:{}".format(N,AVG_TH,CHEBY_2K_TH,WORSE_TH,BEN_FIELD,MODE))
+    #logger.debug("STEP_FIELD:{} RSI_MODE:{} MIN_ROC1:{} MAX_ROC1:{} STEPS_TH:{} ".format(STEP_FIELD,RSI_MODE,MIN_ROC1,MAX_ROC1,STEPS_TH))
+    #logger.debug("OUTPUT_RSI_VALUE:{} INPUT_RSI_VALUE_TH:{}".format(OUTPUT_RSI_VALUE,INPUT_RSI_VALUE_TH))
     
     data_for_log['epoch'] = epoch
     data_for_log['currency_pair'] = currency_pair
@@ -131,9 +131,9 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
     data_for_log = {} 
       
 
-    logger.debug("N:{} AVG_TH:{} CHEBY_2K_TH:{} WORSE_TH:{} BEN_FIELD:{} MODE:{}".format(N,AVG_TH,CHEBY_2K_TH,WORSE_TH,BEN_FIELD,MODE))
-    logger.debug("STEP_FIELD:{} RSI_MODE:{} MIN_ROC1:{} MAX_ROC1:{} STEPS_TH:{} ".format(STEP_FIELD,RSI_MODE,MIN_ROC1,MAX_ROC1,STEPS_TH))
-    logger.debug("OUTPUT_RSI_VALUE:{} INPUT_RSI_VALUE_TH:{}".format(OUTPUT_RSI_VALUE,INPUT_RSI_VALUE_TH))
+    #logger.debug("N:{} AVG_TH:{} CHEBY_2K_TH:{} WORSE_TH:{} BEN_FIELD:{} MODE:{}".format(N,AVG_TH,CHEBY_2K_TH,WORSE_TH,BEN_FIELD,MODE))
+    #logger.debug("STEP_FIELD:{} RSI_MODE:{} MIN_ROC1:{} MAX_ROC1:{} STEPS_TH:{} ".format(STEP_FIELD,RSI_MODE,MIN_ROC1,MAX_ROC1,STEPS_TH))
+    #logger.debug("OUTPUT_RSI_VALUE:{} INPUT_RSI_VALUE_TH:{}".format(OUTPUT_RSI_VALUE,INPUT_RSI_VALUE_TH))
 
     data_for_log['epoch'] = epoch
     data_for_log['currency_pair'] = currency_pair
