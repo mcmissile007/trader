@@ -137,6 +137,21 @@ def buy_now(semaphore, logger, remote_data_base_config, currency_pair, time_fram
 def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, time_frame, rate, amount, rate_limit):
     retries = 48 * 10
     order = False
+    total_amount_in_usd = amount * rate
+    logger.debug("sell total_amount_in_usd:{}".format(total_amount_in_usd))
+    amount_item_in_usd = 500.0
+    logger.debug("amount_item_in_usd:{}".format(amount_item_in_usd))
+    num_items = total_amount_in_usd / amount_item_in_usd
+    logger.debug("sell num_items:{}".format(num_items))
+    if num_items  > 2:
+        amount_item = amount / float(num_items)
+        logger.debug("sell amount_item:{}".format(amount_item))
+    else:
+        amount_item = amount
+        logger.debug("sell amount_item:{} equal to amount".format(amount_item))
+
+
+
     while (retries > 0):
         retries -= 1
         with semaphore:
@@ -144,7 +159,7 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
             req['command'] = "sell"
             req['currencyPair'] = currency_pair
             req['rate'] = rate
-            req['amount'] = amount
+            req['amount'] = amount_item
             req['immediateOrCancel'] = 1
             req['fillOrKill'] = 1
             req['nonce'] = int(time.time()*1000)
@@ -155,7 +170,16 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
             continue
 
         if "orderNumber" in order and int(order["orderNumber"]) > 1:
-            return order
+            logger.debug("sell order ok:{}".format(order))
+            logger.debug("sell amount_item:{}".format(amount_item))
+            amount -= amount_item
+            if amount == 0:
+                return order
+            else:
+                logger.debug("sell amount remain is not zero{}".format(amount))
+                pass
+                
+            
         time.sleep(1)
         ticket = _db.getLastTicketFromDB(
             logger, remote_data_base_config, currency_pair, time_frame)
