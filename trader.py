@@ -211,6 +211,8 @@ def main(semaphore,model):
         logger.debug("Quote balance:{}".format(quote_balance))
         logger.debug("Base percent:{}".format(base_percent))
         logger.debug("Quote percent:{}".format(quote_percent))
+
+
        
         ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
         if ticket == False:
@@ -225,6 +227,18 @@ def main(semaphore,model):
         if amount_invested_in_base > 1.0:
             enought_quote_balance = True
         logger.debug("enought_quote_balance:{}".format(enought_quote_balance)) 
+        maybe_balance_remains_unsold = False
+        if amount_invested_in_base > 1.0:
+             logger.debug("verify if balance remains unsold:{}".format(amount_invested_in_base)) 
+             purchase_operations = _trader.get_last_purchase_operations (semaphore,logger,currency_pair)
+             logger.debug("purchase_operations:{}".format(purchase_operations))
+             if len(purchase_operations) == 0:
+                 maybe_balance_remains_unsold = True
+                 logger.debug("not exist purchase operations alert!:{}".format(maybe_balance_remains_unsold)) 
+                 logger.debug("sell immediately to finish the previous operation.")
+                #it's dangerous, do it manually in beta. 
+                # _trader.try_to_sell_NOW(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance) 
+                 continue
 
         if base_balance < model['sos_amount'] and enought_quote_balance:
              logger.debug("base_balance less than sos_amount:{} SOS!!".format(model['sos_amount']))

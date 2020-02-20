@@ -111,6 +111,30 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
 
 
 
+def try_to_sell_NOW (semaphore,logger,remote_data_base_config,currency_pair,increment,time_frame,output_rsi,amount_to_sell):
+ 
+    ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
+    logger.debug("try to sell last ticket NOW:{}".format(ticket))
+    if ticket:
+        last = ticket['last'] 
+        highestBid = ticket['highestBid']
+        sell_loss = (last/highestBid) -1.0
+        sell_price = highestBid
+        logger.debug("sell_price:{}".format(sell_price))
+        logger.debug("sell_loss:{}".format(sell_loss))
+        amount_in_base = amount_to_sell * sell_price 
+        logger.debug("amount to sell in quote currency:{}".format(amount_to_sell))
+        logger.debug("last rate:{}".format(ticket['last']))
+        logger.debug("amount to sell in base:{}".format(amount_in_base))
+        sell_price_limit = sell_price  - (sell_price*0.005)
+        logger.debug("sell_price:{}".format(sell_price))
+        logger.debug("sell_price_limit:{}".format(sell_price_limit))
+        response = _poloniex.sell_now_secure(semaphore,logger,remote_data_base_config,currency_pair,time_frame,sell_price,amount_to_sell,sell_price_limit)
+        if response != False:
+            if 'orderNumber' in response and int(response['orderNumber']) > 0 :
+                _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],output_rsi,int(response['orderNumber']),json.dumps(response))
+
+
 def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,candle_rsi,output_rsi,amount_to_sell,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,sos_rate):
  
     ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
