@@ -173,10 +173,13 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
             logger.debug("sell order ok:{}".format(order))
             logger.debug("sell amount_item:{}".format(amount_item))
             amount -= amount_item
-            if amount == 0:
+            logger.debug("sell amount remain{}".format(amount))
+            amount_in_usd = amount * rate
+            logger.debug("sell amount remain in usd{}".format(amount_in_usd))
+            if amount_in_usd < 10.0:
                 return order
             else:
-                logger.debug("sell amount remain is not zero{}".format(amount))
+                logger.debug("sell amount remain in usd is bigger than 10 usd{}".format(amount_in_usd))
                 pass
                 
             
