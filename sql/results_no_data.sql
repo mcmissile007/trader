@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.28, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.29, for Linux (x86_64)
 --
--- Host: localhost    Database: monopoly
+-- Host: 176.58.102.12    Database: monopoly
 -- ------------------------------------------------------
--- Server version	5.7.28-0ubuntu0.18.04.4
+-- Server version	5.7.29
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -59,12 +59,13 @@ CREATE TABLE `results` (
   `r_sos_rate` float DEFAULT '0',
   `r_base_balance` float DEFAULT '0',
   `r_quote_balance` float DEFAULT '0',
+  `m_init_base_balance` float DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `r_total_benefit` (`r_total_benefit`),
   KEY `m_hash` (`m_hash`),
   KEY `r_sos_rate` (`r_sos_rate`),
   KEY `r_repurchase_rate` (`r_repurchase_rate`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1670 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -76,4 +77,4 @@ CREATE TABLE `results` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-12-19  7:27:12
+-- Dump completed on 2020-02-21  9:35:12

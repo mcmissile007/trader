@@ -475,7 +475,7 @@ def logInsertNeighbors(logger,data_base_config,data):
         return False  
     return True
 
-def logInsertOrder(logger,data_base_config,currency_pair,_type,price,amount_in_quote,amount_in_base,increment,model_name,model_key,last,highestBid,lowestAsk,output_rsi,orderNumber,response):
+def logInsertOrder(logger,data_base_config,currency_pair,_type,price,amount_in_quote,amount_in_base,increment,model_name,model_key,last,highestBid,lowestAsk,mean_purchase_price,output_rsi,orderNumber,response):
     _type=_type
     model = model_name
     try:
@@ -489,7 +489,7 @@ def logInsertOrder(logger,data_base_config,currency_pair,_type,price,amount_in_q
             logger.error("Error data base connection: %s",str(e))
             return False
                              
-    sql = "insert into log_orders(epoch,currency_pair,type,price,amount_in_quote,amount_in_base,model,increment,model_key,last,highestBid,lowestAsk,output_rsi,orderNumber,response) values(" 
+    sql = "insert into log_orders(epoch,currency_pair,type,price,amount_in_quote,amount_in_base,model,increment,model_key,last,highestBid,lowestAsk,mean_purchase_price,output_rsi,orderNumber,response) values(" 
     sql += str(int(time.time())) + ",'"
     sql += currency_pair + "','"
     sql += _type + "',"
@@ -502,6 +502,7 @@ def logInsertOrder(logger,data_base_config,currency_pair,_type,price,amount_in_q
     sql += str(last) + ","
     sql += str(highestBid) + ","
     sql += str(lowestAsk) + ","
+    sql += str(mean_purchase_price) + ","
     sql += str(output_rsi/1000.0) + ","
     sql += str(orderNumber) + ",'"
     sql += str(response) + "')"
@@ -581,6 +582,44 @@ def getTicketsFromDB(logger,data_base_config,currency_pair,start_th,end_th):
             logger.debug("%s",results)
             if len(results) > 0:
                 return results 
+            else:
+                logger.debug("no results")
+                return False
+       
+    except Exception as e:
+        logger.error(sql)
+        logger.error("Exception in sql:" + str(e))
+        return False
+
+
+def getCurrentMeanPurchaseFromDB(logger,data_base_config,currency_pair):
+
+
+    try:
+        db_connection = pymysql.connect(host=data_base_config['host'],
+                             user=data_base_config['user'],
+                             password=data_base_config['password'],
+                             db=data_base_config['db'],
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+    except Exception as e:
+            logger.error("Error data base connection: %s",str(e))
+            return False
+
+    
+    sql = "select mean_purchase_price from log_orders where type='buy' and " 
+    sql += " currency_pair='" + currency_pair + "'"
+    sql += " order by epoch desc limit 1" 
+    
+    try:
+      
+        with db_connection.cursor() as cursor:
+            logger.debug("%s",sql)
+            cursor.execute(sql)
+            results = list(cursor.fetchall())
+            logger.debug("%s",results)
+            if len(results) == 1:
+                return results[0] 
             else:
                 logger.debug("no results")
                 return False

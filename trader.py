@@ -55,6 +55,7 @@ def main(semaphore,model):
     logger.info("amount_to_buy in base:{}".format(initial_amount_to_buy_in_base))
     logger.info("model:{}".format(model))
     possible_open_order = True
+    mean_purchase_prices = [] 
  
     while (True):
         
@@ -180,7 +181,7 @@ def main(semaphore,model):
         logger.debug("possible_open_order:{}".format(possible_open_order)) 
         free_to_buy = True
         if possible_open_order:
-            retval_manage_open_orders = _trader.manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'])
+            retval_manage_open_orders = _trader.manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],mean_purchase_prices)
             if retval_manage_open_orders == True:
                 possible_open_order = False
                 free_to_buy = True
@@ -211,9 +212,16 @@ def main(semaphore,model):
         logger.debug("Quote balance:{}".format(quote_balance))
         logger.debug("Base percent:{}".format(base_percent))
         logger.debug("Quote percent:{}".format(quote_percent))
+        if mean_purchase_prices != []: 
+            logger.debug("just for test: last_mean_purchase_price:{}".format(mean_purchase_prices[-1]))
+        else:
+            mean_purchase = _db.getCurrentMeanPurchaseFromDB(logger,remote_data_base_config,currency_pair)
+            if mean_purchase == False:
+                logger.debug(" just for test:  Error getting mean_purchase to calculate new current_mean_purchase_price:{}".format(mean_purchase))
+            mean_purchase_price = float(mean_purchase['mean_purchase_price'])
+            logger.debug(" just for test: mean_purchase_price from db:{}".format(mean_purchase_price))
 
-
-       
+    
         ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
         if ticket == False:
             logger.debug("Error getting last ticket to calculate amount_invested:{}".format(ticket))
@@ -235,7 +243,24 @@ def main(semaphore,model):
              if len(purchase_operations) == 0:
                  maybe_balance_remains_unsold = True
                  logger.debug("not exist purchase operations alert!:{}".format(maybe_balance_remains_unsold)) 
-                 logger.debug("sell immediately to finish the previous operation.")
+                 if mean_purchase_prices == []:  
+                    mean_purchase = _db.getCurrentMeanPurchaseFromDB(logger,remote_data_base_config,currency_pair)
+                    if mean_purchase == False:
+                        logger.debug("Error getting mean_purchase to calculate new current_mean_purchase_price:{}".format(mean_purchase))
+                        logger.debug("sell immediately to finish the previous operation.")
+                        #it's dangerous, do it manually in beta. 
+                        #_trader.try_to_sell_NOW(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,mean_purchase_prices) 
+                        continue
+                    mean_purchase_price = float(mean_purchase['mean_purchase_price'])
+                    logger.debug("mean_purchase_price from db:{}".format(mean_purchase_price))
+                    if mean_purchase_prices != 0:
+                        mean_purchase_prices.append(mean_purchase_price)
+                    else:
+                        logger.debug(" zero mean_purchase_price from db:{}".format(mean_purchase_price))
+                        continue
+          
+                 possible_open_order = True
+                 _trader.try_to_sell_UNSOLD(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate'],mean_purchase_prices) 
                 #it's dangerous, do it manually in beta. 
                 # _trader.try_to_sell_NOW(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance) 
                  continue
@@ -243,7 +268,7 @@ def main(semaphore,model):
         if base_balance < model['sos_amount'] and enought_quote_balance:
              logger.debug("base_balance less than sos_amount:{} SOS!!".format(model['sos_amount']))
              possible_open_order = True
-             _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate']) 
+             _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate'],mean_purchase_prices) 
              continue
 
         #rsi mode always 1 so never buy if rsi is high   
@@ -263,7 +288,7 @@ def main(semaphore,model):
 
             if enought_quote_balance:
                 possible_open_order = True
-                _trader.try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance)
+                _trader.try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,mean_purchase_prices)
         else:
             if model['func']  == 0:
                 if  _invest.shouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair,remote_data_base_config):
@@ -278,7 +303,7 @@ def main(semaphore,model):
                         logger.debug("free_to_buy:{}".format(free_to_buy))
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
-                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model)
+                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
             if model['func']  == 1:
@@ -296,7 +321,7 @@ def main(semaphore,model):
                         logger.debug("free_to_buy:{}".format(free_to_buy))
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
-                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model)
+                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
             if model['func']  == 2:
@@ -312,7 +337,7 @@ def main(semaphore,model):
                         logger.debug("free_to_buy:{}".format(free_to_buy))
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
-                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model)
+                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
             
