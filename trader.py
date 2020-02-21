@@ -218,8 +218,9 @@ def main(semaphore,model):
             mean_purchase = _db.getCurrentMeanPurchaseFromDB(logger,remote_data_base_config,currency_pair)
             if mean_purchase == False:
                 logger.debug(" just for test:  Error getting mean_purchase to calculate new current_mean_purchase_price:{}".format(mean_purchase))
-            mean_purchase_price = float(mean_purchase['mean_purchase_price'])
-            logger.debug(" just for test: mean_purchase_price from db:{}".format(mean_purchase_price))
+            else:
+                mean_purchase_price = float(mean_purchase['mean_purchase_price'])
+                logger.debug(" just for test: mean_purchase_price from db:{}".format(mean_purchase_price))
 
     
         ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
@@ -251,13 +252,14 @@ def main(semaphore,model):
                         #it's dangerous, do it manually in beta. 
                         #_trader.try_to_sell_NOW(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,mean_purchase_prices) 
                         continue
-                    mean_purchase_price = float(mean_purchase['mean_purchase_price'])
-                    logger.debug("mean_purchase_price from db:{}".format(mean_purchase_price))
-                    if mean_purchase_prices != 0:
-                        mean_purchase_prices.append(mean_purchase_price)
                     else:
-                        logger.debug(" zero mean_purchase_price from db:{}".format(mean_purchase_price))
-                        continue
+                        mean_purchase_price = float(mean_purchase['mean_purchase_price'])
+                        logger.debug("mean_purchase_price from db:{}".format(mean_purchase_price))
+                        if mean_purchase_prices != 0:
+                            mean_purchase_prices.append(mean_purchase_price)
+                        else:
+                            logger.debug(" zero mean_purchase_price from db:{}".format(mean_purchase_price))
+                            continue
           
                  possible_open_order = True
                  _trader.try_to_sell_UNSOLD(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate'],mean_purchase_prices) 
