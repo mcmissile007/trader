@@ -141,7 +141,12 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
     currencies = currency_pair.split("_") 
     base_currency = currencies[0]
     quote_currency = currencies[1] 
-    
+    if total_amount_in_usd > 200:
+        fillOrKill = 0
+    else:
+        fillOrKill = 1
+
+    logger.debug("sell fillOrKill:{}".format(fillOrKill))
     while (retries > 0):
         retries -= 1
         with semaphore:
@@ -151,7 +156,7 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
             req['rate'] = rate
             req['amount'] = amount
             req['immediateOrCancel'] = 1
-            req['fillOrKill'] = 0
+            req['fillOrKill'] = fillOrKill
             req['nonce'] = int(time.time()*1000)
             order = api_post(logger, req, 1)
 
@@ -178,6 +183,11 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
                 logger.debug("new amount to sell:{}".format(amount))
                 total_amount_in_usd = amount * rate
                 logger.debug("sell total_amount_in_usd remain:{}".format(total_amount_in_usd))
+                if total_amount_in_usd > 200:
+                    fillOrKill = 0
+                else:
+                    fillOrKill = 1
+                logger.debug("sell fillOrKill:{}".format(fillOrKill))
                 
             
         time.sleep(1)
