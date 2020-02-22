@@ -175,14 +175,13 @@ def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, t
             quote_balance = float(available_balances[quote_currency])
             logger.debug("Base balance:{}".format(base_balance))
             logger.debug("Quote balance:{}".format(quote_balance))
-            if base_balance < 1.5:
+            amount = quote_balance
+            total_amount_in_usd = amount * rate
+            if total_amount_in_usd < 1.5:
                 return order
             else:
-                logger.debug("sell amount remain in usd is bigger than 1.5 usd:{}".format(base_balance))
-                amount = quote_balance
+                logger.debug("sell amount remain in usd is bigger than 1.5 usd:{}".format(total_amount_in_usd))
                 logger.debug("new amount to sell:{}".format(amount))
-                total_amount_in_usd = amount * rate
-                logger.debug("sell total_amount_in_usd remain:{}".format(total_amount_in_usd))
                 if total_amount_in_usd > 200:
                     fillOrKill = 0
                 else:
