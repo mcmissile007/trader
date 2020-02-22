@@ -133,8 +133,69 @@ def buy_now(semaphore, logger, remote_data_base_config, currency_pair, time_fram
             rate = ticket['lowestAsk']
     return order
 
-
 def sell_now_secure(semaphore, logger, remote_data_base_config, currency_pair, time_frame, rate, amount, rate_limit):
+    retries = 48 * 10
+    order = False
+    total_amount_in_usd = amount * rate
+    logger.debug("sell total_amount_in_usd:{}".format(total_amount_in_usd))
+    currencies = currency_pair.split("_") 
+    base_currency = currencies[0]
+    quote_currency = currencies[1] 
+    
+    while (retries > 0):
+        retries -= 1
+        with semaphore:
+            req = {}
+            req['command'] = "sell"
+            req['currencyPair'] = currency_pair
+            req['rate'] = rate
+            req['amount'] = amount
+            req['immediateOrCancel'] = 1
+            req['fillOrKill'] = 0
+            req['nonce'] = int(time.time()*1000)
+            order = api_post(logger, req, 1)
+
+        if order == False:
+            time.sleep(2)
+            continue
+
+        if "orderNumber" in order and int(order["orderNumber"]) > 1:
+            logger.debug("order:{}".format(order))
+            time.sleep(10)
+            available_balances = get_available_balances(semaphore,logger)
+            if available_balances == False:
+                logger.debug("Error getting available_balances:{}".format(available_balances))
+                return order
+            base_balance = float(available_balances[base_currency])
+            quote_balance = float(available_balances[quote_currency])
+            logger.debug("Base balance:{}".format(base_balance))
+            logger.debug("Quote balance:{}".format(quote_balance))
+            if base_balance < 1.5:
+                return order
+            else:
+                logger.debug("sell amount remain in usd is bigger than 1.5 usd:{}".format(base_balance))
+                amount = quote_balance
+                logger.debug("new amount to sell:{}".format(amount))
+                total_amount_in_usd = amount * rate
+                logger.debug("sell total_amount_in_usd remain:{}".format(total_amount_in_usd))
+                
+            
+        time.sleep(1)
+        ticket = _db.getLastTicketFromDB(
+            logger, remote_data_base_config, currency_pair, time_frame)
+        logger.debug("try to sell last ticket:{}".format(ticket))
+        if ticket:
+            rate = ticket['highestBid'] - (ticket['highestBid']*0.001)
+            logger.debug("new rate:{}".format(rate))
+            if rate < rate_limit:
+                logger.debug(
+                    "end selling rate lower than rate_limit:{}".format(rate_limit))
+                return False
+
+    return order
+
+
+def sell_now_secure_split(semaphore, logger, remote_data_base_config, currency_pair, time_frame, rate, amount, rate_limit):
     retries = 48 * 10
     order = False
     total_amount_in_usd = amount * rate

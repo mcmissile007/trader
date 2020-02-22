@@ -233,11 +233,11 @@ def main(semaphore,model):
         logger.debug("amount_invested in base:{}".format(amount_invested_in_base))
         logger.debug("amount to sell in quote currency:{}".format(quote_balance))
         enought_quote_balance = False
-        if amount_invested_in_base > 1.0:
+        if amount_invested_in_base > 2.0:
             enought_quote_balance = True
         logger.debug("enought_quote_balance:{}".format(enought_quote_balance)) 
         maybe_balance_remains_unsold = False
-        if amount_invested_in_base > 1.0:
+        if amount_invested_in_base > 4.0:
              logger.debug("verify if balance remains unsold:{}".format(amount_invested_in_base)) 
              purchase_operations = _trader.get_last_purchase_operations (semaphore,logger,currency_pair)
              logger.debug("purchase_operations:{}".format(purchase_operations))
@@ -284,7 +284,7 @@ def main(semaphore,model):
             base_balance = float(available_balances[base_currency])
             quote_balance = float(available_balances[quote_currency])
             enought_quote_balance = False
-            if amount_invested_in_base > 1.0:
+            if amount_invested_in_base > 2.0:
                 enought_quote_balance = True
             logger.debug("enought_quote_balance:{}".format(enought_quote_balance)) 
 
