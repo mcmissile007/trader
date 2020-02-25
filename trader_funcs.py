@@ -109,6 +109,13 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
         logger.debug("response to buy:{}".format(response))
         if response != False:
             if 'orderNumber' in response and int(response['orderNumber']) > 0 :
+                time.sleep(10)
+                purchase_operations = get_last_purchase_operations (semaphore,logger,currency_pair)
+                logger.debug("updated purchase_operations:{}".format(purchase_operations))
+                current_mean_price = _purchase.getCurrentRealMeanPrice(purchase_operations)
+                logger.debug("new current_mean_price:{}".format(current_mean_price))
+                delta_price_over_mean = (purchase_price/current_mean_price) - 1.0
+                logger.debug("new delta_price_over_mean:{}".format(delta_price_over_mean))
                 mean_purchase_prices.append(current_mean_price)
                 _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'buy',purchase_price,amount_to_buy_in_quote,amount_to_buy_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_price,output_rsi,int(response['orderNumber']),json.dumps(response))
 
