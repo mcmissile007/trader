@@ -5,12 +5,13 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import time
 
-initial_amount_to_buy_in_base = 200.0
+initial_amount_to_buy_in_base = 500.0
 min_amount_to_buy_in_base = 0.0
 max_amount_to_buy_in_base = 100000
-r = 0.02
+r = 0.005
 min_rate = 0.02
 fee = 0.002
+
 
 def getTotalCurrentBaseInversion(purchase_operations):
     if len(purchase_operations) > 0:
@@ -136,8 +137,21 @@ def buy(ticket,purchase_operations,base_balance,quote_balance):
             print("aborted buy not improve mean")
             print("delta_price_over_mean:{}".format(delta_price_over_mean))
             '''
-            return
-        amount_to_buy_in_quote = get_amount_to_buy_in_quote(purchase_operations,purchase_price,initial_amount_to_buy_in_base,min_amount_to_buy_in_base,max_amount_to_buy_in_base,r)
+            return False
+      
+        if len(purchase_operations) == 1:
+            r_mod = 0.01
+        if len(purchase_operations) == 2:
+            r_mod = 0.02
+        if len(purchase_operations) == 3:
+            r_mod = 0.03
+        if len(purchase_operations) == 4:
+            r_mod = 0.04
+        if len(purchase_operations) == 5:
+            r_mod = 0.05
+        if len(purchase_operations) > 5:
+            r_mod = 0.06
+        amount_to_buy_in_quote = get_amount_to_buy_in_quote(purchase_operations,purchase_price,initial_amount_to_buy_in_base,min_amount_to_buy_in_base,max_amount_to_buy_in_base,r_mod)
         amount_to_buy_in_base = amount_to_buy_in_quote * purchase_price
     '''
     print("we are gointo buy in quote:{}".format(amount_to_buy_in_quote))
@@ -147,10 +161,14 @@ def buy(ticket,purchase_operations,base_balance,quote_balance):
     print("sum base_balance:{}".format(sum(base_balance))) 
     print("sum quote_balance:{}".format(sum(quote_balance)))
     '''
+
+    if amount_to_buy_in_base < 5.0:
+        return False
+
     if sum(base_balance) <= 10*min_amount_to_buy_in_base:
        # print("aborted buy by low balance")
        # print("sum base_balance:{}".format(sum(base_balance)))
-        return
+        return False
 
     if sum(base_balance) <=  amount_to_buy_in_base  :
         amount_to_buy_in_base = sum(base_balance)
@@ -160,6 +178,8 @@ def buy(ticket,purchase_operations,base_balance,quote_balance):
     purchase_operations.append((purchase_price,ticket['epoch'] ,fee,amount_to_buy_in_quote*purchase_price,amount_to_buy_in_quote))
     quote_balance.append(amount_to_buy_in_quote)
     base_balance.append(-amount_to_buy_in_quote*(purchase_price+fee))
+    last_sell_epoch = ticket['epoch']
+    return True
     '''
     if amount_to_buy_in_base > 5.0:
         print("buy ticket ts:{}".format(ticket['ts']))
@@ -195,13 +215,17 @@ def main(logger):
     if tickets_df.empty:
         logger.error(f"Error reading tickets dataframe,empty dataframe")
         return
+    tickets_df = tickets_df[tickets_df['epoch'] >= start_time_simulation ] 
     print(tickets_df.head())
     print(tickets_df.tail())
+    last_sell_epoch = start_time_simulation
     for index, ticket in tickets_df.iterrows():
         
         if (ticket['highestBid'] == ticket['lowestAsk']) and (ticket['highestBid'] == ticket['last'] ):
            # print(index,ticket['ts'],ticket['last'],ticket['highestBid'], ticket['lowestAsk'])
-            buy(ticket,purchase_operations,base_balance,quote_balance)
+            if buy(ticket,purchase_operations,base_balance,quote_balance):
+                pass
+
         total_amount_invested_in_base =  getTotalCurrentBaseInversion(purchase_operations)
        # print("total_amount_invested_in_base:{}".format(total_amount_invested_in_base))
         current_percent_benefit = getCurrentPercentBenefit(purchase_operations,ticket['highestBid'])
@@ -213,6 +237,7 @@ def main(logger):
         if current_rate_benefit > min_rate:
             print("sell:",index,ticket['ts'],ticket['last'],ticket['highestBid'], ticket['lowestAsk'])
             sell(ticket,purchase_operations,base_balance,quote_balance,trade_operations)
+            last_sell_epoch = ticket['epoch']
         '''
         if current_rate_benefit >  0.04:
             buy(ticket,purchase_operations,base_balance,quote_balance)
@@ -220,8 +245,14 @@ def main(logger):
     
     time_end_sim = int(time.time())
     time_sim_in_seconds = time_end_sim - time_start_sim
+    print("")
     print("time_sim_in_seconds:{}".format(time_sim_in_seconds))
-    
+    total_days_simulating = (end_time_simulation - start_time_simulation)/86400
+    print("total_days_simulating:{}".format(total_days_simulating))
+    total_days_playing = (last_sell_epoch - start_time_simulation)/86400
+    print("total_days_playing:{}".format(total_days_playing))
+    rate_playing = total_days_playing/total_days_simulating
+    print("rate_playing:{}".format(rate_playing))
     max_inversion = max(trade_operations,key=lambda x:x[0])[0]
     print("max_inversion:{}".format(max_inversion))
     mean_inversion = np.mean([ x[0] for x in trade_operations ])

@@ -42,7 +42,12 @@ def sim_buy_in_base (logger,local_data_base_config,currency_pair,close,increment
             logger.debug("aborted buy not improve mean")
             logger.debug("delta_price_over_mean:{}".format(delta_price_over_mean))
             return
-        amount_to_buy_in_quote = _purchase.get_amount_to_buy_in_quote(logger,purchase_operations,purchase_price,initial_amount_to_buy_in_base,min_amount_to_buy_in_base,max_amount_to_buy_in_base,model['r'])
+        if model['r_mode'] == 1:
+            r_mod = model['r'] * len(purchase_operations)
+        else:
+            r_mod =  model['r']
+
+        amount_to_buy_in_quote = _purchase.get_amount_to_buy_in_quote(logger,purchase_operations,purchase_price,initial_amount_to_buy_in_base,min_amount_to_buy_in_base,max_amount_to_buy_in_base,r_mod)
         amount_to_buy_in_base = amount_to_buy_in_quote * purchase_price
         logger.debug("we are gointo buy in quote:{}".format(amount_to_buy_in_quote))
         logger.debug("we are gointo buy in base:{}".format(amount_to_buy_in_base))
@@ -54,6 +59,9 @@ def sim_buy_in_base (logger,local_data_base_config,currency_pair,close,increment
     logger.debug("quote_balance:{}".format(quote_balance))
     logger.debug("sum base_balance:{}".format(sum(base_balance))) 
     logger.debug("sum quote_balance:{}".format(sum(quote_balance)))
+    if amount_to_buy_in_base < 5.0:
+        logger.debug("aborted buy by amount_to_buy_in_base")
+        return
     if sum(base_balance) <= 10*min_amount_to_buy_in_base:
         logger.debug("aborted buy by low balance")
         logger.debug("sum base_balance:{}".format(sum(base_balance)))

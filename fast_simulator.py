@@ -37,7 +37,9 @@ def main(logger, models_testing):
     
     time_frame = 300
     day_before_learning = 100
+    time.sleep(random.random()*60)
     while (True):
+        
         model = _md_funcs.getModeltoTest()
         if  model['hash'] in models_testing:
             continue
@@ -50,6 +52,7 @@ def main(logger, models_testing):
 
     currency_pair = model['currency_pair']
     always_win = model['always_win'] 
+    rsi_mode = model['rsi_mode'] 
     min_current_rate_benefit = model['min_current_rate_benefit'] 
     max_amount_to_buy_in_base = model['max_amount_to_buy_in_base']
     initial_amount_to_buy_in_base = model['initial_amount_to_buy_in_base'] 
@@ -221,22 +224,47 @@ def main(logger, models_testing):
              _sim.sim_sell_SOS(logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,sos_model_benefit,sos_games,last,highestBid) 
              continue
 
-        #rsi mode always 1 so never buy if rsi is high 
-        if last_candle_df.iloc[0]['rsi'] >  (output_rsi / 1000.0):
-            logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
-            logger.debug("good point to sell...")
-            if len(purchase_operations) > 0  and  enought_quote_balance:
+        # if rsi mode  1  never buy if rsi is high 
+        if rsi_mode:
+            if last_candle_df.iloc[0]['rsi'] >  (output_rsi / 1000.0):
                 logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
                 logger.debug("good point to sell...")
-                _sim.sim_sell (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,games,last,highestBid)
+                if len(purchase_operations) > 0  and  enought_quote_balance:
+                    logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
+                    logger.debug("good point to sell...")
+                    _sim.sim_sell (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,games,last,highestBid)
+                else:
+                    pass
+                    logger.debug("none purchase operations or not enought_quote_balance ")
             else:
-                pass
-                logger.debug("none purchase operations or not enought_quote_balance ")
-        else:
+                if model['func']  == 0:
+                    if  _invest.shouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair):
+                        if sum(base_balance) > model['initial_amount_to_buy_in_base']:
+                            _sim.sim_buy_in_base (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,purchase_operations,trade_operations,base_balance,quote_balance,now,repurchases,last,lowestAsk)
+                        else:
+                            pass
+                            logger.debug("Insuficcient base balance:{}".format(base_balance))
+                if model['func']  == 1:
+                    if  _invest.simpleDownShouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair):
+                        if sum(base_balance) > model['initial_amount_to_buy_in_base'] :
+                            _sim.sim_buy_in_base (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,purchase_operations,trade_operations,base_balance,quote_balance,now,repurchases,last,lowestAsk)
+                        else:
+                            pass
+                            logger.debug("Insuficcient base balance:{}".format(base_balance))
+                if model['func']  == 2:
+                    if  _invest.simpleShouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair):
+                        if sum(base_balance) > model['initial_amount_to_buy_in_base'] :
+                            _sim.sim_buy_in_base (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,purchase_operations,trade_operations,base_balance,quote_balance,now,repurchases,last,lowestAsk)
+                        else:
+                            pass
+                            logger.debug("Insuficcient base balance:{}".format(base_balance))
+        else:#rsi mode 0 
+            #first is possible to buy.
             if model['func']  == 0:
                 if  _invest.shouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair):
                     if sum(base_balance) > model['initial_amount_to_buy_in_base']:
                         _sim.sim_buy_in_base (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,purchase_operations,trade_operations,base_balance,quote_balance,now,repurchases,last,lowestAsk)
+                        continue
                     else:
                         pass
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
@@ -244,6 +272,7 @@ def main(logger, models_testing):
                 if  _invest.simpleDownShouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair):
                     if sum(base_balance) > model['initial_amount_to_buy_in_base'] :
                         _sim.sim_buy_in_base (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,purchase_operations,trade_operations,base_balance,quote_balance,now,repurchases,last,lowestAsk)
+                        continue
                     else:
                         pass
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
@@ -251,9 +280,23 @@ def main(logger, models_testing):
                 if  _invest.simpleShouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair):
                     if sum(base_balance) > model['initial_amount_to_buy_in_base'] :
                         _sim.sim_buy_in_base (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,purchase_operations,trade_operations,base_balance,quote_balance,now,repurchases,last,lowestAsk)
+                        continue
                     else:
                         pass
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
+           #if not buy maybe sell 
+            if last_candle_df.iloc[0]['rsi'] >  (output_rsi / 1000.0):
+                logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
+                logger.debug("good point to sell...")
+                if len(purchase_operations) > 0  and  enought_quote_balance:
+                    logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
+                    logger.debug("good point to sell...")
+                    _sim.sim_sell (logger,local_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,purchase_operations,trade_operations,quote_balance,now,games,last,highestBid)
+                else:
+                    pass
+                    logger.debug("none purchase operations or not enought_quote_balance ")
+                
+
     
     
     time_end_sim = int(time.time())
@@ -341,9 +384,11 @@ def main(logger, models_testing):
     data_for_log['m_sos_amount'] = model['amount_to_sos_mode']
     data_for_log['m_sos_rate'] = model['sos_model_benefit']
     data_for_log['m_mode'] = model['mode']
+    data_for_log['m_rsi_mode'] = model['rsi_mode']
     data_for_log['m_func'] = model['func']
     data_for_log['m_avg'] = model['avg']
     data_for_log['m_r'] = model['r']
+    data_for_log['m_r_mode'] = model['r_mode']
     data_for_log['m_min_roc1'] = model['min_roc1']
     data_for_log['m_max_roc1'] = model['max_roc1']
 

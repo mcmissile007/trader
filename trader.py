@@ -30,6 +30,7 @@ def main(semaphore,model):
     genesis_th = 24 * 3600  
     currency_pair = model['currency_pair']
     always_win = model['always_win'] 
+    rsi_mode = model['rsi_mode'] 
     min_current_rate_benefit = model['min_current_rate_benefit'] 
     max_amount_to_buy_in_base = model['max_amount_to_buy_in_base']
     sleep_time = model['sleep_time']  
@@ -273,25 +274,78 @@ def main(semaphore,model):
              _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate'],mean_purchase_prices) 
              continue
 
-        #rsi mode always 1 so never buy if rsi is high   
-        if last_candle_df.iloc[0]['rsi'] >  (output_rsi / 1000.0):
-            logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
-            logger.debug("good point to sell...")
-            available_balances = _poloniex.get_available_balances(semaphore,logger)
-            if available_balances == False:
-                logger.debug("Error getting available_balances:{}".format(available_balances))
-                continue
-            base_balance = float(available_balances[base_currency])
-            quote_balance = float(available_balances[quote_currency])
-            enought_quote_balance = False
-            if amount_invested_in_base > 2.0:
-                enought_quote_balance = True
-            logger.debug("enought_quote_balance:{}".format(enought_quote_balance)) 
+        #rsi mode always 1 so never buy if rsi is high 
+        if rsi_mode:  
+            if last_candle_df.iloc[0]['rsi'] >  (output_rsi / 1000.0):
+                logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
+                logger.debug("good point to sell...")
+                available_balances = _poloniex.get_available_balances(semaphore,logger)
+                if available_balances == False:
+                    logger.debug("Error getting available_balances:{}".format(available_balances))
+                    continue
+                base_balance = float(available_balances[base_currency])
+                quote_balance = float(available_balances[quote_currency])
+                enought_quote_balance = False
+                if amount_invested_in_base > 2.0:
+                    enought_quote_balance = True
+                logger.debug("enought_quote_balance:{}".format(enought_quote_balance)) 
 
-            if enought_quote_balance:
-                possible_open_order = True
-                _trader.try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,mean_purchase_prices)
+                if enought_quote_balance:
+                    possible_open_order = True
+                    _trader.try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,mean_purchase_prices)
+            else:
+                if model['func']  == 0:
+                    if  _invest.shouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair,remote_data_base_config):
+                        available_balances = _poloniex.get_available_balances(semaphore,logger)
+                        if available_balances == False:
+                            logger.debug("Error getting available_balances:{}".format(available_balances))
+                            continue
+                        base_balance = float(available_balances[base_currency])
+                        quote_balance = float(available_balances[quote_currency])
+                        if base_balance > model['initial_amount_to_buy_in_base'] :
+                            possible_open_order = True
+                            logger.debug("free_to_buy:{}".format(free_to_buy))
+                            if free_to_buy:
+                                logger.debug("calling try_to_buy_in_base...") 
+                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                        else:
+                            logger.debug("Insuficcient base balance:{}".format(base_balance))
+                if model['func']  == 1:
+                    if  _invest.simpleDownShouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair,remote_data_base_config):
+                        
+                        available_balances = _poloniex.get_available_balances(semaphore,logger)
+                        if available_balances == False:
+                            logger.debug("Error getting available_balances:{}".format(available_balances))
+                            continue
+                        base_balance = float(available_balances[base_currency])
+                        quote_balance = float(available_balances[quote_currency])
+
+                        if base_balance > model['initial_amount_to_buy_in_base'] :
+                            possible_open_order = True
+                            logger.debug("free_to_buy:{}".format(free_to_buy))
+                            if free_to_buy:
+                                logger.debug("calling try_to_buy_in_base...") 
+                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                        else:
+                            logger.debug("Insuficcient base balance:{}".format(base_balance))
+                if model['func']  == 2:
+                    if  _invest.simpleShouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair,remote_data_base_config):
+                        available_balances = _poloniex.get_available_balances(semaphore,logger)
+                        if available_balances == False:
+                            logger.debug("Error getting available_balances:{}".format(available_balances))
+                            continue
+                        base_balance = float(available_balances[base_currency])
+                        quote_balance = float(available_balances[quote_currency])
+                        if base_balance > model['initial_amount_to_buy_in_base'] :
+                            possible_open_order = True
+                            logger.debug("free_to_buy:{}".format(free_to_buy))
+                            if free_to_buy:
+                                logger.debug("calling try_to_buy_in_base...") 
+                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                        else:
+                            logger.debug("Insuficcient base balance:{}".format(base_balance))
         else:
+           #rsi_mode is 0, so it is possible buy with high rsi. 
             if model['func']  == 0:
                 if  _invest.shouldIInvest(logger,learning_df,last_candle_df,model,now,currency_pair,remote_data_base_config):
                     available_balances = _poloniex.get_available_balances(semaphore,logger)
@@ -306,6 +360,7 @@ def main(semaphore,model):
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
                             _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                            continue
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
             if model['func']  == 1:
@@ -324,6 +379,7 @@ def main(semaphore,model):
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
                             _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                            continue
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
             if model['func']  == 2:
@@ -340,8 +396,30 @@ def main(semaphore,model):
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
                             _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                            continue
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
+           #if not buy maybe sell
+            if last_candle_df.iloc[0]['rsi'] >  (output_rsi / 1000.0):
+                logger.debug("rsi output reached:{}".format(last_candle_df.iloc[0]['rsi']))
+                logger.debug("good point to sell...")
+                available_balances = _poloniex.get_available_balances(semaphore,logger)
+                if available_balances == False:
+                    logger.debug("Error getting available_balances:{}".format(available_balances))
+                    continue
+                base_balance = float(available_balances[base_currency])
+                quote_balance = float(available_balances[quote_currency])
+                enought_quote_balance = False
+                if amount_invested_in_base > 2.0:
+                    enought_quote_balance = True
+                logger.debug("enought_quote_balance:{}".format(enought_quote_balance)) 
+
+                if enought_quote_balance:
+                    possible_open_order = True
+                    _trader.try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,mean_purchase_prices)
+                    continue
+
+
             
 if __name__ == "__main__":
 
