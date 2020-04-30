@@ -424,6 +424,7 @@ def main(semaphore,model):
 if __name__ == "__main__":
 
     from models_data import models
+    time.sleep(300)
    
     processes = []
     semaphore = multiprocessing.Semaphore()
