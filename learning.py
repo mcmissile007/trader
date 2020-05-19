@@ -8,8 +8,8 @@ import aux_funcs as _aux
 from learning_funcs import calculate_learning_dataframe_from_db
 
 from database_config import remote_data_base_config
-CURRENCY_PAIRS = [("USDC_BTC",750,300)]
-DAYS_BEFORE = 100
+CURRENCY_PAIRS = [("USDC_BTC",750,300),("USDC_ETH",760,300),("USDC_BCHSV",780,300),("USDC_XMR",760,300),("USDC_ATOM",770,300)]
+DAYS_BEFORE = 64
 
 if __name__ == "__main__":
   

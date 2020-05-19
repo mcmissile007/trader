@@ -11,7 +11,7 @@ def get_last_purchase_trade_operations (semaphore,logger,currency_pair):
     if trade_history == False:
         return False 
     last_purchase_trade_operations = [] 
-    for i,trade in enumerate(trade_history):
+    for trade in trade_history:
         if trade['type'] ==  "sell":
             return last_purchase_trade_operations
         else:
