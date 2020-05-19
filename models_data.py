@@ -27,9 +27,9 @@ end_time_simulation = 1574985600 #  Friday, November 29, 2019 0:00:00 BTC 7736
 | e49c73c81b93854306c70162c1e57f43 |           400 |      3 |          0 | 0.0055 | 0.015 |         4608.89 |   -0.000407152 |         1.69934 |          42 |              12 |   0.285714 |
 +----------------------------------+---------------+--------+------------+--------+-------+-----------------+----------------+-----------------+-------------+-----------------+------------+
 '''
-
-model = {}
+models = []
 #BTC
+model = {}
 model['always_win'] = True
 model['min_current_rate_benefit'] = 0.02
 model['currency_pair'] = "USDC_BTC" 
@@ -57,6 +57,7 @@ model['steps'] =  566
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
 models.append(model)
 #ETH
+model = {}
 model['always_win'] = True
 model['min_current_rate_benefit'] = 0.02
 model['currency_pair'] = "USDC_ETH" 
@@ -84,6 +85,7 @@ model['steps'] =  566
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
 #models.append(model)
 #BCHSV
+model = {}
 model['always_win'] = True
 model['min_current_rate_benefit'] = 0.02
 model['currency_pair'] = "USDC_BCHSV" 
@@ -111,6 +113,7 @@ model['steps'] =  566
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
 #models.append(model)
 #XMR
+model = {}
 model['always_win'] = True
 model['min_current_rate_benefit'] = 0.02
 model['currency_pair'] = "USDC_XMR" 
@@ -138,6 +141,7 @@ model['steps'] =  566
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
 #models.append(model)
 #ATOM
+model = {}
 model['always_win'] = True
 model['min_current_rate_benefit'] = 0.02
 model['currency_pair'] = "USDC_ATOM" 
