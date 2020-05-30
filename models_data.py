@@ -36,8 +36,8 @@ model['currency_pair'] = "USDC_BTC"
 model['sleep_time'] = 10  + len(models)
 model['log_file_name'] = "trader_USDC_BTC_"
 model['initial_base_balance_to_simulate'] = 10000.0
-model['initial_amount_to_buy_in_base'] = 200.0  
-model['min_amount_to_buy_in_base'] = 1.1 
+model['initial_amount_to_buy_in_base'] = 400.0  
+model['min_amount_to_buy_in_base'] = 2.0 
 model['max_amount_to_buy_in_base'] = 1000000.0
 model['sos_amount'] = 200.0
 model['sos_rate'] = 0.01
@@ -64,8 +64,8 @@ model['currency_pair'] = "USDC_ETH"
 model['sleep_time'] = 10  + len(models)
 model['log_file_name'] = "trader_USDC_ETH_"
 model['initial_base_balance_to_simulate'] = 10000.0
-model['initial_amount_to_buy_in_base'] = 200.0  
-model['min_amount_to_buy_in_base'] = 1.1 
+model['initial_amount_to_buy_in_base'] = 400.0  
+model['min_amount_to_buy_in_base'] = 2.0 
 model['max_amount_to_buy_in_base'] = 1000000.0
 model['sos_amount'] = 200.0
 model['sos_rate'] = 0.01
@@ -83,7 +83,7 @@ model['worse'] = -0.05
 model['cheby2k'] = -0.2
 model['steps'] =  566  
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
-#models.append(model)
+models.append(model)
 #BCHSV
 model = {}
 model['always_win'] = True
@@ -148,8 +148,8 @@ model['currency_pair'] = "USDC_ATOM"
 model['sleep_time'] = 10  + len(models)
 model['log_file_name'] = "trader_USDC_ATOM_"
 model['initial_base_balance_to_simulate'] = 10000.0
-model['initial_amount_to_buy_in_base'] = 25.0  
-model['min_amount_to_buy_in_base'] = 1.1 
+model['initial_amount_to_buy_in_base'] = 50.0  
+model['min_amount_to_buy_in_base'] = 2.0
 model['max_amount_to_buy_in_base'] = 1000000.0
 model['sos_amount'] = 200.0
 model['sos_rate'] = 0.01
@@ -167,4 +167,4 @@ model['worse'] = -0.05
 model['cheby2k'] = -0.2
 model['steps'] =  566  
 model['features'] = {'roc1_z':1.0,'roc3_z':1.0,'roc6_z':1.0,'roc12_z':1.0,'roc24_z':1.0,'roc48_z':1.0,'roc72_z':1.0,'roc288_z':1.0,'sma50_delta_z':1.0,'ema13_delta_z':1.0,'ema26_delta_z':1.0,'trix_z':1.0,'rsi_z':1.0,'macd_z':1.0,'histogram_z':1.0} 
-#models.append(model)
+models.append(model)

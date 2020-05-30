@@ -280,7 +280,8 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
     q5_benefit = neighbors[BEN_FIELD].quantile(0.05)
     q95_benefit = neighbors[BEN_FIELD].quantile(0.95)
     
-    wins = np.where(neighbors[BEN_FIELD] > 0,1,0).sum()
+    #wins = np.where(neighbors[BEN_FIELD] > 0,1,0).sum()
+    wins = np.sum(np.where(neighbors[BEN_FIELD] > 0,1,0))
     if n > 0:
         prob_win = wins/n
     else:
@@ -352,7 +353,7 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
         
     else:
         buy = False
-        logger.debug("wait to buy...")
+        logger.debug("wait to buy,easy,easy...")
         data_for_log['buy']= 0 
     if data_base_config != None:
         _db.logInsertNeighbors(logger,data_base_config,data_for_log)
