@@ -22,7 +22,7 @@ import trader_funcs as _trader
 import aux_funcs as _aux
 
 
-def main(semaphore,model):
+def main(semaphore,model,playing):
 
     last_signals = {}
     time_frame = 300
@@ -213,6 +213,22 @@ def main(semaphore,model):
         logger.debug("Quote balance:{}".format(quote_balance))
         logger.debug("Base percent:{}".format(base_percent))
         logger.debug("Quote percent:{}".format(quote_percent))
+        if currency_pair == "USDC_BTC": #USDC_BTC always is the first coin to analyze,and always is analyzed
+            playing = 0
+            logger.debug("Playing set to 0:{}".format(playing))
+        playing += quote_percent
+        logger.debug("Playing:{}".format(playing))
+        if quote_percent == 0.0:
+            logger.debug("quote_percent is 0, free to start a play if no other coin is playing")
+            time.sleep(10) #wait to other coins to update playing
+            logger.debug("Playing updated:{}".format(playing))
+            if playing > 0.0 :
+                logger.debug("Another coin is playing no free to buy")
+                free_to_buy = False
+            else:
+                logger.debug("No coin is playing free to buy for this reason")
+
+
         if mean_purchase_prices != []: 
             logger.debug("just for test: last_mean_purchase_price:{}".format(mean_purchase_prices[-1]))
         else:
@@ -428,12 +444,19 @@ if __name__ == "__main__":
    
     processes = []
     semaphore = multiprocessing.Semaphore()
+    playing = multiprocessing.Value('playing',0)
+    exits_BTC = False #BTC is the leading currency that must always exist to synchronize the process
     for model in models:
-         process = multiprocessing.Process(target = main, args=(semaphore,model,))
-         time.sleep(random.randint(1, 10))
-         process.start()
-         processes.append(process)
+        if model['currency_pair'] == "USDC_BTC":
+            exits_BTC = True
 
-    for process in processes:
-        process.join()    
+    if exits_BTC:
+        for model in models:
+            process = multiprocessing.Process(target = main, args=(semaphore,model,playing,))
+            time.sleep(random.randint(1, 10))
+            process.start()
+            processes.append(process)
+
+        for process in processes:
+            process.join()    
 
