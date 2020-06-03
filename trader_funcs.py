@@ -34,7 +34,7 @@ def get_last_purchase_operations (semaphore,logger,currency_pair):
             last_purchase_operations.append((rate,epoch,fee,total,amount))
     return last_purchase_operations
 
-def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,output_rsi,model,mean_purchase_prices):
+def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent):
   
     ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
     logger.debug("try to buy last ticket:{}".format(ticket))
@@ -72,9 +72,21 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
                 logger.debug("delta_price_over_mean:{}".format(delta_price_over_mean))
                 return
             if model['r_mode'] == 1:
-                r_mod = model['r'] * len(purchase_operations)
+                #sometimes in purchase_operations the same purchase has multiple entries because it is divided into pieces
+                #instead mean_purchase_prices has unique values ​​per purchase
+                if len(mean_purchase_prices) == 0:
+                    r_mod = model['r'] * len(purchase_operations)
+                else:
+                    r_mod = model['r'] * len(mean_purchase_prices)  
+
+            elif model['r_mode'] == 2:
+                r_mod = global_quote_percent/20.0
             else:
                 r_mod =  model['r']
+            
+            r_mod = max(r_mod,model['r'])
+
+            logger.debug("r_mod:{}".format(r_mod))
             amount_to_buy_in_quote = _purchase.get_amount_to_buy_in_quote(logger,purchase_operations,purchase_price,initial_amount_to_buy_in_base,min_amount_to_buy_in_base,max_amount_to_buy_in_base,r_mod)
             amount_to_buy_in_base = amount_to_buy_in_quote * purchase_price
             logger.debug("we are gointo buy in quote:{}".format(amount_to_buy_in_quote))
@@ -338,7 +350,7 @@ def try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,close,in
             if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                 _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
 
-def manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,close,increment,mean_purchase_prices):
+def manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,close,increment,mean_purchase_prices,global_quote_percent):
     open_orders = _poloniex.get_open_orders(semaphore,logger,currency_pair)
     logger.debug("open_orders response:{}".format(open_orders)) 
     if open_orders == False:
@@ -394,7 +406,7 @@ def manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,mo
                                 purchase_price = last
                                 if delta_change < 0.005:
                                     logger.debug("new purchase_price:{} try to open order".format(purchase_price))
-                                    try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,output_rsi,model,mean_purchase_prices)
+                                    try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,close,increment,time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent)
                                 else:
                                     logger.debug("delta change:{} too high. The price is not as good as when shouldIInvest was yes.".format(delta_change))
 

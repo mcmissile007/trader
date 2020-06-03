@@ -22,7 +22,7 @@ import trader_funcs as _trader
 import aux_funcs as _aux
 
 
-def main(semaphore,model,playing):
+def main(semaphore,model,global_quote_percent):
 
     last_signals = {}
     time_frame = 300
@@ -179,16 +179,7 @@ def main(semaphore,model,playing):
 
         last_candle_df = candles_df[-1:].copy(deep = True)  
         logger.debug("last:candle:{}".format(last_candle_df.T))
-        logger.debug("possible_open_order:{}".format(possible_open_order)) 
-        free_to_buy = True
-        if possible_open_order:
-            retval_manage_open_orders = _trader.manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],mean_purchase_prices)
-            if retval_manage_open_orders == True:
-                possible_open_order = False
-                free_to_buy = True
-            else:
-                free_to_buy = False
-        logger.debug("free_to_buy:{}".format(free_to_buy))
+        
         #another process does this task to avoid multiple calls to poloniex getbalance per process
         db_balances = _db.getBalanceFromDB(logger,remote_data_base_config,now)
         logger.debug("db_balances:{}".format(db_balances))
@@ -209,24 +200,39 @@ def main(semaphore,model,playing):
                 continue
             base_balance = float(available_balances[base_currency])
             quote_balance = float(available_balances[quote_currency])
+            quote_percent = quote_balance / base_balance
+            base_percent = 1.0 - quote_percent
         logger.debug("Base balance:{}".format(base_balance))
         logger.debug("Quote balance:{}".format(quote_balance))
         logger.debug("Base percent:{}".format(base_percent))
         logger.debug("Quote percent:{}".format(quote_percent))
         if currency_pair == "USDC_BTC": #USDC_BTC always is the first coin to analyze,and always is analyzed
-            playing.value = 0.0
-            logger.debug("Playing set to 0:{}".format(playing))
-        playing.value += quote_percent
-        logger.debug("Playing:{}".format(playing.value))
+            global_quote_percent.value = 0.0
+            logger.debug("global_quote_percent set to 0:{}".format(global_quote_percent.value))
+        global_quote_percent.value += quote_percent
+        logger.debug("global_quote_percent:{}".format(global_quote_percent.value))
         if quote_percent == 0.0:
-            logger.debug("quote_percent is 0, free to start a play if no other coin is playing")
-            time.sleep(10) #wait to other coins to update playing
-            logger.debug("Playing updated:{}".format(playing.value))
-            if playing.value > 0.0 :
-                logger.debug("Another coin is playing no free to buy")
+            logger.debug("quote_percent is 0, free to start a play if no other coin is global_quote_percent")
+            time.sleep(10) #wait to other coins to update global_quote_percent
+            logger.debug("global_quote_percent updated:{}".format(global_quote_percent.value))
+            if global_quote_percent.value > 0.0 :
+                logger.debug("Another coin is global_quote_percent no free to buy")
                 free_to_buy = False
             else:
-                logger.debug("No coin is playing free to buy for this reason")
+                logger.debug("No coin is global_quote_percent free to buy for this reason")
+
+
+        logger.debug("possible_open_order:{}".format(possible_open_order)) 
+        free_to_buy = True
+        if possible_open_order:
+            retval_manage_open_orders = _trader.manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],mean_purchase_prices,global_quote_percent.value)
+            if retval_manage_open_orders == True:
+                possible_open_order = False
+                free_to_buy = True
+            else:
+                free_to_buy = False
+        logger.debug("free_to_buy:{}".format(free_to_buy))
+       
 
 
         if mean_purchase_prices != []: 
@@ -323,7 +329,7 @@ def main(semaphore,model,playing):
                             logger.debug("free_to_buy:{}".format(free_to_buy))
                             if free_to_buy:
                                 logger.debug("calling try_to_buy_in_base...") 
-                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent.value)
                         else:
                             logger.debug("Insuficcient base balance:{}".format(base_balance))
                 if model['func']  == 1:
@@ -341,7 +347,7 @@ def main(semaphore,model,playing):
                             logger.debug("free_to_buy:{}".format(free_to_buy))
                             if free_to_buy:
                                 logger.debug("calling try_to_buy_in_base...") 
-                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent.value)
                         else:
                             logger.debug("Insuficcient base balance:{}".format(base_balance))
                 if model['func']  == 2:
@@ -357,7 +363,7 @@ def main(semaphore,model,playing):
                             logger.debug("free_to_buy:{}".format(free_to_buy))
                             if free_to_buy:
                                 logger.debug("calling try_to_buy_in_base...") 
-                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                                _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent.value)
                         else:
                             logger.debug("Insuficcient base balance:{}".format(base_balance))
         else:
@@ -375,7 +381,7 @@ def main(semaphore,model,playing):
                         logger.debug("free_to_buy:{}".format(free_to_buy))
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
-                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent.value)
                             continue
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
@@ -394,7 +400,7 @@ def main(semaphore,model,playing):
                         logger.debug("free_to_buy:{}".format(free_to_buy))
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
-                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent.value)
                             continue
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
@@ -411,7 +417,7 @@ def main(semaphore,model,playing):
                         logger.debug("free_to_buy:{}".format(free_to_buy))
                         if free_to_buy:
                             logger.debug("calling try_to_buy_in_base...") 
-                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices)
+                            _trader.try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,output_rsi,model,mean_purchase_prices,global_quote_percent.value)
                             continue
                     else:
                         logger.debug("Insuficcient base balance:{}".format(base_balance))
@@ -444,7 +450,7 @@ if __name__ == "__main__":
    
     processes = []
     semaphore = multiprocessing.Semaphore()
-    playing = multiprocessing.Value('d',0.0)
+    global_quote_percent = multiprocessing.Value('d',0.0)
     exits_BTC = False #BTC is the leading currency that must always exist to synchronize the process
     for model in models:
         if model['currency_pair'] == "USDC_BTC":
@@ -452,7 +458,7 @@ if __name__ == "__main__":
 
     if exits_BTC:
         for model in models:
-            process = multiprocessing.Process(target = main, args=(semaphore,model,playing,))
+            process = multiprocessing.Process(target = main, args=(semaphore,model,global_quote_percent,))
             time.sleep(random.randint(1, 10))
             process.start()
             processes.append(process)
