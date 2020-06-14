@@ -58,7 +58,7 @@ def main(semaphore,model,global_quote_percent):
     logger.info("model:{}".format(model))
     possible_open_order = True
     mean_purchase_prices = []
-    _matrix.send("Greetings professor Falken. Let's play {1} with initial_amount_to_buy_in_base {2} ".format(currency_pair,initial_amount_to_buy_in_base)) 
+    _matrix.send("Greetings professor Falken. Let's play {0} with initial_amount_to_buy_in_base {1} ".format(currency_pair,initial_amount_to_buy_in_base)) 
  
     while (True):
         
@@ -223,7 +223,7 @@ def main(semaphore,model,global_quote_percent):
         global_quote_percent.value += quote_percent
         logger.debug("global_quote_percent:{}".format(global_quote_percent.value))
         if send_state:
-            _matrix.send("Daily report: quote_currency {1} . base_balance {2}. quote_balance {3} . base_percent {4} . quote_percent {5}. global_quote_percent {6} ".format(quote_currency,base_balance,quote_balance,base_percent,quote_percent,global_quote_percent.value))
+            _matrix.send("Daily report: quote_currency {0} . base_balance {1}. quote_balance {2} . base_percent {3} . quote_percent {4}. global_quote_percent {5} ".format(quote_currency,base_balance,quote_balance,base_percent,quote_percent,global_quote_percent.value))
         if quote_percent == 0.0:
             logger.debug("quote_percent is 0, free to start a play if no other coin is global_quote_percent")
             time.sleep(10) #wait to other coins to update global_quote_percent
@@ -307,7 +307,7 @@ def main(semaphore,model,global_quote_percent):
              logger.debug("base_balance less than sos_amount:{} SOS!!".format(model['sos_amount']))
              possible_open_order = True
              if send_state:
-                _matrix.send("State trying to sell SOS {1} . Base_balance {2} less than sos_amount:{3} SOS!!".format(currency_pair,base_balance,model['sos_amount'])) 
+                _matrix.send("State trying to sell SOS {0} . Base_balance {1} less than sos_amount:{2} SOS!!".format(currency_pair,base_balance,model['sos_amount'])) 
              _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate'],mean_purchase_prices) 
              continue
 
