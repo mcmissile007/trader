@@ -133,4 +133,5 @@ logs/
 data/
 poloniex_config.py
 database_config.py
+matrix_config.py
 

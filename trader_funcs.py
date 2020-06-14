@@ -5,6 +5,7 @@ import poloniex_funcs as  _poloniex
 from datetime import datetime
 import database_funcs as _db
 import purchase_operations_funcs as _purchase
+import matrix_funcs as _matrix
 
 def get_last_purchase_trade_operations (semaphore,logger,currency_pair):
     trade_history = _poloniex.get_trade_history (semaphore,logger,currency_pair)#suppose sorter 
@@ -38,6 +39,7 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
   
     ticket = _db.getLastTicketFromDB(logger,remote_data_base_config,currency_pair,time_frame)
     logger.debug("try to buy last ticket:{}".format(ticket))
+    purchase_type = "default"
     if ticket:
         last = ticket['last'] 
         lowestAsk = ticket['lowestAsk']
@@ -120,9 +122,11 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
             logger.debug("low balance revisited we are gointo buy in basde:{}".format(amount_to_buy_in_base))
 
         if purchase_loss < 0.015:
+            purchase_type = "now"
             response = _poloniex.buy_now(semaphore,logger,remote_data_base_config,currency_pair,time_frame,purchase_price,amount_to_buy_in_quote) 
         else:
             purchase_price = last
+            purchase_type = "open_order"
             logger.debug("new purchase_price:{} try to open order".format(purchase_price))
             response = _poloniex.buy(semaphore,logger,currency_pair,purchase_price,amount_to_buy_in_quote)
         logger.debug("response to buy:{}".format(response))
@@ -137,6 +141,7 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
                 logger.debug("new delta_price_over_mean:{}".format(delta_price_over_mean))
                 mean_purchase_prices.append(current_mean_price)
                 _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'buy',purchase_price,amount_to_buy_in_quote,amount_to_buy_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                _matrix.send("New purchase {1} {2}s = {3} USDCs . purchase_price {4} . new current_mean_price {5}. delta_price_over_mean {6}. purchase_type {7}. base_balance {8}. quote_balance {9}".format(amount_to_buy_in_quote,quote_currency,amount_to_buy_in_base,purchase_price,current_mean_price,delta_price_over_mean,purchase_type,base_balance,quote_balance)) 
 
 
 
@@ -206,6 +211,7 @@ def try_to_sell_UNSOLD (semaphore,logger,remote_data_base_config,currency_pair,c
                 if response != False:
                     if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                         _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                        _matrix.send("New sell UNSOLD currency_pair {1} . amount_in_quote {2} .  amount_in_base {3} . sell_price {4} . mean_purchase_price {5} . current_rate_benefit {6} . ".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_rate_benefit)) 
             else:
                 logger.debug("current rate benefit not enough to UNSOLD sell:{}".format(current_rate_benefit))
         else:
@@ -217,6 +223,7 @@ def try_to_sell_UNSOLD (semaphore,logger,remote_data_base_config,currency_pair,c
                 if response != False:
                     if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                         _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                        _matrix.send("New sell UNSOLD currency_pair {1} . amount_in_quote {2} .  amount_in_base {3} . sell_price {4} . mean_purchase_price {5} . current_rate_benefit {6} . ".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_rate_benefit)) 
             else:
                 logger.debug("always win is false but candle_rsi is low to UNSOLD sell :{}".format(candle_rsi))
 
@@ -264,6 +271,7 @@ def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,clos
                 if response != False:
                     if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                         _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                        _matrix.send("New sell SOS currency_pair {1} . amount_in_quote {2} .  amount_in_base {3} . sell_price {4} . mean_purchase_price {5} . current_percent_benefit {6}% . total_current_base_benefit {7} USDCs ".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_percent_benefit,total_current_base_benefit)) 
             else:
                 logger.debug("current rate benefit not enough to SOS sell:{}".format(current_rate_benefit))
         else:
@@ -275,6 +283,7 @@ def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,clos
                 if response != False:
                     if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                         _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                        _matrix.send("New sell SOS currency_pair {1} . amount_in_quote {2} .  amount_in_base {3} . sell_price {4} . mean_purchase_price {5} . current_percent_benefit {6}% . total_current_base_benefit {7} USDCs".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_percent_benefit,total_current_base_benefit)) 
             else:
                 logger.debug("always win is false but candle_rsi is low to SOS sell :{}".format(candle_rsi))
 
@@ -349,6 +358,7 @@ def try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,close,in
         if response != False:
             if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                 _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                _matrix.send("New sell currency_pair {1} . amount_in_quote {2} .  amount_in_base {3} . sell_price {4} . mean_purchase_price {5} . current_percent_benefit {6}% . total_current_base_benefit {7} USDCs".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_percent_benefit,total_current_base_benefit)) 
 
 def manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,close,increment,mean_purchase_prices,global_quote_percent):
     open_orders = _poloniex.get_open_orders(semaphore,logger,currency_pair)

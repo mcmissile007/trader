@@ -20,6 +20,7 @@ import database_funcs as _db
 import invest_funcs as _invest
 import trader_funcs as _trader
 import aux_funcs as _aux
+import matrix_funcs as _matrix
 
 
 def main(semaphore,model,global_quote_percent):
@@ -56,21 +57,31 @@ def main(semaphore,model,global_quote_percent):
     logger.info("amount_to_buy in base:{}".format(initial_amount_to_buy_in_base))
     logger.info("model:{}".format(model))
     possible_open_order = True
-    mean_purchase_prices = [] 
+    mean_purchase_prices = []
+    _matrix.send("Greetings professor Falken. Let's play {1} with initial_amount_to_buy_in_base {2} ".format(currency_pair,initial_amount_to_buy_in_base)) 
  
     while (True):
         
         time.sleep(0.5)
+        send_state = False
         timeframes = _aux.decideCurrentTimeFrame(last_signals)
         if timeframes == []:
             continue
         logger.debug("Start analyzing")    
         now = int(time.time())
+       
         if now % time_frame != 0:
             logger.debug("Error now time:%d",now)
             continue
         time.sleep(sleep_time) # wait to have the last candle and balances in database
         logger.debug("analyzing:%s***",str(datetime.now()))
+        now_datetime = datetime.now()
+        if now_datetime.hour == 7 and now_datetime.minute == 30:
+            send_state = True
+        if now_datetime.hour == 13 and now_datetime.minute == 30:
+            send_state = True
+        if now_datetime.hour == 21 and now_datetime.minute == 30:
+            send_state = True
         if now - time_from_genesis > genesis_th:
             logger.debug("reading learning dataframe: %s ",str(datetime.now()))
             data_files = glob.glob("data/*" + currency_pair + "*.pkl")
@@ -211,6 +222,8 @@ def main(semaphore,model,global_quote_percent):
             logger.debug("global_quote_percent set to 0:{}".format(global_quote_percent.value))
         global_quote_percent.value += quote_percent
         logger.debug("global_quote_percent:{}".format(global_quote_percent.value))
+        if send_state:
+            _matrix.send("Daily report: quote_currency {1} . base_balance {2}. quote_balance {3} . base_percent {4} . quote_percent {5}. global_quote_percent {6} ".format(quote_currency,base_balance,quote_balance,base_percent,quote_percent,global_quote_percent.value))
         if quote_percent == 0.0:
             logger.debug("quote_percent is 0, free to start a play if no other coin is global_quote_percent")
             time.sleep(10) #wait to other coins to update global_quote_percent
@@ -293,6 +306,8 @@ def main(semaphore,model,global_quote_percent):
         if base_balance < model['sos_amount'] and enought_quote_balance:
              logger.debug("base_balance less than sos_amount:{} SOS!!".format(model['sos_amount']))
              possible_open_order = True
+             if send_state:
+                _matrix.send("State trying to sell SOS {1} . Base_balance {2} less than sos_amount:{3} SOS!!".format(currency_pair,base_balance,model['sos_amount'])) 
              _trader.try_to_sell_SOS(semaphore,logger,remote_data_base_config,currency_pair,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],time_frame,last_candle_df.iloc[0]['rsi'],output_rsi,quote_balance,always_win,min_current_rate_benefit,max_amount_to_buy_in_base,base_balance,model['sos_rate'],mean_purchase_prices) 
              continue
 
