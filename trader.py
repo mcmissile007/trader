@@ -224,27 +224,32 @@ def main(semaphore,model,global_quote_percent):
         logger.debug("global_quote_percent:{}".format(global_quote_percent.value))
         if send_state:
             _matrix.send("Daily report: quote_currency {0} . base_balance {1}. quote_balance {2} . base_percent {3} . quote_percent {4}. global_quote_percent {5} ".format(quote_currency,base_balance,quote_balance,base_percent,quote_percent,global_quote_percent.value))
+        
+        free_to_buy_by_global_quote = True
         if quote_percent == 0.0:
             logger.debug("quote_percent is 0, free to start a play if no other coin is global_quote_percent")
             time.sleep(10) #wait to other coins to update global_quote_percent
             logger.debug("global_quote_percent updated:{}".format(global_quote_percent.value))
             if global_quote_percent.value > 0.0 :
                 logger.debug("Another coin is global_quote_percent no free to buy")
-                free_to_buy = False
+                free_to_buy_by_global_quote = False
             else:
                 logger.debug("No coin is global_quote_percent free to buy for this reason")
+                free_to_buy_by_global_quote = True
 
 
         logger.debug("possible_open_order:{}".format(possible_open_order)) 
-        free_to_buy = True
+        free_to_buy_by_open_order = True
         if possible_open_order:
             retval_manage_open_orders = _trader.manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],mean_purchase_prices,global_quote_percent.value)
             if retval_manage_open_orders == True:
                 possible_open_order = False
-                free_to_buy = True
+                free_to_buy_by_open_order = True
             else:
-                free_to_buy = False
-        logger.debug("free_to_buy:{}".format(free_to_buy))
+                free_to_buy_by_open_order = False
+        logger.debug("free_to_buy_by_open_order:{}".format(free_to_buy_by_open_order))
+
+        free_to_buy = free_to_buy_by_global_quote and free_to_buy_by_open_order
        
 
 
