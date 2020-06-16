@@ -10,7 +10,7 @@ import aux_funcs as _aux
 import poloniex_funcs as  _poloniex
 import database_funcs as _db
 
-CURRENCIES = ["USDC","BTC","XRP","ETH","LTC","ATOM","STR","XMR","BCHSV","BCHABC"]
+CURRENCIES = ["USDC","BTC","ETH"]
 
 
 def main(logger):

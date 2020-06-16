@@ -196,14 +196,20 @@ def main(semaphore,model,global_quote_percent):
         logger.debug("db_balances:{}".format(db_balances))
         base_percent = 0.0
         quote_percent = 0.0
+        global_quote_percent_from_db = 0.0
+        balance_from_db_OK = False
         if db_balances != False:
+            balance_from_db_OK = True
             for db_balance in db_balances:
                 if db_balance['currency']  == base_currency:
                     base_balance = float(db_balance['amount'])
                     base_percent = float(db_balance['percent'])
-                if db_balance['currency']  == quote_currency:
+                elif db_balance['currency']  == quote_currency:
                     quote_balance = float(db_balance['amount'])
                     quote_percent = float(db_balance['percent'])
+                    global_quote_percent_from_db += float(db_balance['percent'])
+                else :
+                    global_quote_percent_from_db += float(db_balance['percent'])
         else:
             available_balances = _poloniex.get_available_balances(semaphore,logger)
             if available_balances == False:
@@ -213,31 +219,42 @@ def main(semaphore,model,global_quote_percent):
             quote_balance = float(available_balances[quote_currency])
             quote_percent = quote_balance / base_balance
             base_percent = 1.0 - quote_percent
+            logger.debug("Balance from poloniex. Something is wrong!!.")
         logger.debug("Base balance:{}".format(base_balance))
         logger.debug("Quote balance:{}".format(quote_balance))
         logger.debug("Base percent:{}".format(base_percent))
         logger.debug("Quote percent:{}".format(quote_percent))
-        if currency_pair == "USDC_BTC": #USDC_BTC always is the first coin to analyze,and always is analyzed
-            global_quote_percent.value = 0.0
-            logger.debug("global_quote_percent set to 0:{}".format(global_quote_percent.value))
-        global_quote_percent.value += quote_percent
+        free_to_buy_by_global_quote = True
+        if not balance_from_db_OK:
+            if currency_pair == "USDC_BTC": #USDC_BTC always is the first coin to analyze,and always is analyzed
+                global_quote_percent.value = 0.0
+                logger.debug("global_quote_percent set to 0:{}".format(global_quote_percent.value))
+            global_quote_percent.value += quote_percent
+            logger.debug("global_quote_percent:{}".format(global_quote_percent.value))
+            if quote_percent == 0.0: #still not playing this coin
+                logger.debug("quote_percent is 0, free to start a play if no other coin is global_quote_percent")
+                time.sleep(10) #wait to other coins to update global_quote_percent
+                logger.debug("global_quote_percent updated:{}".format(global_quote_percent.value))
+                if global_quote_percent.value > 0.0 :
+                    logger.debug("Another coin is playing no free to buy")
+                    free_to_buy_by_global_quote = False
+                else:
+                    logger.debug("No coin is playing free to buy for this reason")
+                    free_to_buy_by_global_quote = True
+        else:
+            global_quote_percent.value = global_quote_percent_from_db
+            if quote_percent == 0.0: #still not playing this coin
+                if global_quote_percent.value > 0.0 :
+                    logger.debug("global_quote_from_db. Another coin is playing no free to buy")
+                    free_to_buy_by_global_quote = False
+                else:
+                    logger.debug("global_quote_from_db. No coin is playing free to buy for this reason")
+                    free_to_buy_by_global_quote = True
+                     
         logger.debug("global_quote_percent:{}".format(global_quote_percent.value))
         if send_state:
             _matrix.send("Daily report: quote_currency {0} . base_balance {1}. quote_balance {2} . base_percent {3} . quote_percent {4}. global_quote_percent {5} ".format(quote_currency,base_balance,quote_balance,base_percent,quote_percent,global_quote_percent.value))
         
-        free_to_buy_by_global_quote = True
-        if quote_percent == 0.0:
-            logger.debug("quote_percent is 0, free to start a play if no other coin is global_quote_percent")
-            time.sleep(10) #wait to other coins to update global_quote_percent
-            logger.debug("global_quote_percent updated:{}".format(global_quote_percent.value))
-            if global_quote_percent.value > 0.0 :
-                logger.debug("Another coin is global_quote_percent no free to buy")
-                free_to_buy_by_global_quote = False
-            else:
-                logger.debug("No coin is global_quote_percent free to buy for this reason")
-                free_to_buy_by_global_quote = True
-
-
         logger.debug("possible_open_order:{}".format(possible_open_order)) 
         free_to_buy_by_open_order = True
         if possible_open_order:
@@ -478,7 +495,7 @@ if __name__ == "__main__":
 
     if exits_BTC:
         for model in models:
-            process = multiprocessing.Process(target = main, args=(semaphore,model,global_quote_percent,))
+            process = multiprocessing.Process(target = main, args=(semaphore,model,global_quote_percent))
             time.sleep(random.randint(1, 10))
             process.start()
             processes.append(process)
