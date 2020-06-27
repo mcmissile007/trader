@@ -116,7 +116,7 @@ def try_to_buy_in_base (semaphore,logger,remote_data_base_config,currency_pair,c
             return
 
         if base_balance <=  amount_to_buy_in_base  :
-            amount_to_buy_in_base = base_balance
+            amount_to_buy_in_base = base_balance - (base_balance*0.01) #its necesary pay fees
             amount_to_buy_in_quote = amount_to_buy_in_base/purchase_price
             logger.debug("low balance revisited we are gointo buy in quote:{}".format(amount_to_buy_in_quote))
             logger.debug("low balance revisited we are gointo buy in basde:{}".format(amount_to_buy_in_base))

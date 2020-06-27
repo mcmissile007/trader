@@ -67,7 +67,7 @@ def main(logger):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("simulating_" + str(int(time.time())) )
-    log_file_name = "ticketc_dataframe_generator_" + str(int(time.time())) 
+    log_file_name = "ticket_dataframe_generator_" + str(int(time.time())) 
     filename =  "./logs/" + log_file_name + "." + str(int(time.time()))  + ".log"
     handler = TimedRotatingFileHandler(filename, when="midnight", interval=1)
     handler.suffix = "%Y%m%d"

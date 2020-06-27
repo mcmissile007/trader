@@ -205,11 +205,11 @@ def shouldIInvest(logger,learning_df,last_candle_df,model,epoch,currency_pair,da
   
     
     train = learning_df.copy(deep = True)
-    s = 0.0
+    train['s'] = 0.0
     for feature in  IMPORTANT_FEATURES:
-        s += IMPORTANT_FEATURES[feature] * ((last_candle_df.iloc[0][feature] - train[feature] + 0.00001 ) **2)
+        train['s']  += IMPORTANT_FEATURES[feature] * ((last_candle_df.iloc[0][feature] - train[feature] + 0.00001 ) **2)
 
-    train['space_distance'] = np.sqrt(s)
+    train['space_distance'] = np.sqrt(train['s'])
     train['w_space_distance'] = 100 - train['space_distance'] 
     train['time_distance'] = last_candle_df.iloc[0]['date'] - train['date']
     train = train[train['space_distance'].notnull()] 
