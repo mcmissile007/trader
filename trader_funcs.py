@@ -264,6 +264,7 @@ def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,clos
         logger.debug("abs rate_loss:{}".format(abs_rate_loss))
         if always_win:
             if current_rate_benefit > float(sos_rate):
+                '''
                 sell_price_limit = sell_price  - (sell_price*0.005)
                 logger.debug("sell_price:{}".format(sell_price))
                 logger.debug("sell_price_limit:{}".format(sell_price_limit))
@@ -272,6 +273,32 @@ def try_to_sell_SOS (semaphore,logger,remote_data_base_config,currency_pair,clos
                     if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                         _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
                         _matrix.send("New sell SOS currency_pair {0} . amount_in_quote {1} .  amount_in_base {2} . sell_price {3} . mean_purchase_price {4} . current_percent_benefit {5}% . total_current_base_benefit {6} USDCs ".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_percent_benefit,total_current_base_benefit)) 
+                '''
+                fraction = 4
+                logger.debug("total_amount_to_sell:{}".format(amount_to_sell))
+                amount_to_sell = amount_to_sell / float(fraction)
+                amount_in_base = amount_in_base / float(fraction)
+                logger.debug("new_amount_to_sell:{}".format(amount_to_sell))
+                logger.debug("new_amount_in_base:{}".format(amount_in_base))
+                sell_price = sell_price  - (sell_price*0.001)
+                for i in range(fraction):
+                    step = i/1000
+                    sell_price = sell_price  + (sell_price*step)
+                    logger.debug("sell_price:{}".format(sell_price))
+                    if i == fraction - 1:
+                        amount_to_sell = amount_to_sell - (amount_to_sell*0.005) # to ensure I don't spend what I don't have
+                    logger.debug("amount_to_sell:{}".format(amount_to_sell))
+                    response = _poloniex.sell(semaphore,logger,currency_pair,sell_price,amount_to_sell)
+                    if response != False:
+                        if 'orderNumber' in response and int(response['orderNumber']) > 0 :
+                            _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
+                            _matrix.send("New sell  open order postonly SOS currency_pair {0} . amount_in_quote {1} .  amount_in_base {2} . sell_price {3} . mean_purchase_price {4} . current_percent_benefit {5}% . total_current_base_benefit {6} USDCs ".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_percent_benefit,total_current_base_benefit)) 
+
+                
+                _matrix.send("I'm going to sleep Pr.Falken.") 
+                time.sleep(86400)
+
+
             else:
                 logger.debug("current rate benefit not enough to SOS sell:{}".format(current_rate_benefit))
         else:
@@ -359,6 +386,50 @@ def try_to_sell (semaphore,logger,remote_data_base_config,currency_pair,close,in
             if 'orderNumber' in response and int(response['orderNumber']) > 0 :
                 _db.logInsertOrder(logger,remote_data_base_config,currency_pair,'sell',sell_price,amount_to_sell,amount_in_base,increment,"neighbors","1",ticket['last'],ticket['highestBid'],ticket['lowestAsk'],current_mean_purchase_price,output_rsi,int(response['orderNumber']),json.dumps(response))
                 _matrix.send("New sell currency_pair {0} . amount_in_quote {1} .  amount_in_base {2} . sell_price {3} . mean_purchase_price {4} . current_percent_benefit {5}% . total_current_base_benefit {6} USDCs".format(currency_pair,amount_to_sell,amount_in_base,sell_price,current_mean_purchase_price,current_percent_benefit,total_current_base_benefit)) 
+
+
+def simple_manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,close,increment,mean_purchase_prices,global_quote_percent):
+    open_orders = _poloniex.get_open_orders(semaphore,logger,currency_pair)
+    logger.debug("open_orders response:{}".format(open_orders))
+    if open_orders == False:
+        logger.error("Error getting open orders")
+        return False
+    if open_orders == []:
+        logger.debug("There is no open open orders OK!.") 
+        return True
+    else:
+        logger.debug("There is  open orders.")
+        for open_order in open_orders:
+            logger.debug("open order:{}".format(open_order))
+            if not 'orderNumber' in open_order:
+                logger.error("Error in open_order orderNumber")
+                return False
+            if int(open_order['orderNumber']) < 1:
+                logger.error("Error in open_order orderNumber less than 1")
+                return False
+            if 'date' in open_order:
+                order_datetime = datetime.strptime(open_order['date'] ,'%Y-%m-%d %H:%M:%S')
+                seconds_diff = (datetime.now() - order_datetime).total_seconds()
+                logger.debug("seconds_diff:{}".format(seconds_diff))
+            else:
+                logger.error("Error in open_order date")
+                return False
+            if 'type' in open_order:
+                if open_order['type'] == 'buy':
+                    if seconds_diff > 15 * 60:
+                        retval = _poloniex.cancel_order(semaphore,logger,open_order['orderNumber'])
+                        logger.debug("cancel order response:{}".format(retval))
+                        if retval != False and "success" in retval and int(retval['success']) == 1:
+                            _db.logInsertCancelOrder(logger,remote_data_base_config,currency_pair,"buy","neighbors","1",int(open_order['orderNumber']),json.dumps(retval))
+                            return True
+                    logger.error("buy order still open")
+                    return False
+                if  open_order['type'] == 'sell':
+                    logger.error("sell order still open")
+                    return False
+    return False
+        
+
 
 def manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,close,increment,mean_purchase_prices,global_quote_percent):
     open_orders = _poloniex.get_open_orders(semaphore,logger,currency_pair)

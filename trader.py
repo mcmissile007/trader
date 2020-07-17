@@ -258,13 +258,20 @@ def main(semaphore,model,global_quote_percent):
         logger.debug("possible_open_order:{}".format(possible_open_order)) 
         free_to_buy_by_open_order = True
         if possible_open_order:
-            retval_manage_open_orders = _trader.manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],mean_purchase_prices,global_quote_percent.value)
+            retval_manage_open_orders = _trader.simple_manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,model,time_frame,base_currency,quote_currency,output_rsi,last_candle_df.iloc[0]['close'],last_candle_df.iloc[0]['roc1'],mean_purchase_prices,global_quote_percent.value)
             if retval_manage_open_orders == True:
                 possible_open_order = False
                 free_to_buy_by_open_order = True
             else:
                 free_to_buy_by_open_order = False
+                #if there is an open order neither buy nor sell
+                logger.debug("if there is an open order neither buy nor sell,retval_manage_open_orders:{}".format(retval_manage_open_orders)) 
+                continue
+
+
         logger.debug("free_to_buy_by_open_order:{}".format(free_to_buy_by_open_order))
+
+        
 
         free_to_buy = free_to_buy_by_global_quote and free_to_buy_by_open_order
        

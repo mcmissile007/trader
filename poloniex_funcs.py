@@ -306,7 +306,7 @@ def sell(semaphore, logger, currency_pair, rate, amount):
         req['command'] = "sell"
         req['currencyPair'] = currency_pair
         req['rate'] = rate
-        req['postOnly'] = 1
+        req['postOnly'] = 0 # taker and maker
         req['amount'] = amount
         req['nonce'] = int(time.time()*1000)
         return api_post(logger, req, 3)
