@@ -31,7 +31,7 @@ def get_last_purchase_operations (semaphore,logger,currency_pair):
             fee = float(trade['fee'])
             total = float(trade['total'])
             amount = float(trade['amount'])
-            epoch = datetime.strptime(date_ts,'%Y-%m-%d %H:%M:%S').timestamp()
+            epoch = datetime.strptime(date_ts,'%Y-%m-%d %H:%M:%S.%f').timestamp()
             last_purchase_operations.append((rate,epoch,fee,total,amount))
     return last_purchase_operations
 
@@ -408,7 +408,7 @@ def simple_manage_open_orders(semaphore,logger,currency_pair,remote_data_base_co
                 logger.error("Error in open_order orderNumber less than 1")
                 return False
             if 'date' in open_order:
-                order_datetime = datetime.strptime(open_order['date'] ,'%Y-%m-%d %H:%M:%S')
+                order_datetime = datetime.strptime(open_order['date'] ,'%Y-%m-%d %H:%M:%S.%f')
                 seconds_diff = (datetime.now() - order_datetime).total_seconds()
                 logger.debug("seconds_diff:{}".format(seconds_diff))
             else:
@@ -452,7 +452,7 @@ def manage_open_orders(semaphore,logger,currency_pair,remote_data_base_config,mo
                 return False
         
             if 'date' in open_order:
-                order_datetime = datetime.strptime(open_order['date'] ,'%Y-%m-%d %H:%M:%S')
+                order_datetime = datetime.strptime(open_order['date'] ,'%Y-%m-%d %H:%M:%S.%f')
                 seconds_diff = (datetime.now() - order_datetime).total_seconds()
                 logger.debug("seconds_diff:{}".format(seconds_diff))
             else:
